@@ -1,8 +1,11 @@
 import { Routes, Route, useLocation } from "react-router-dom";
-import AdminLogin from "./components/AdminLogin";
+import Login from "./components/Login";
 import AdminDashboard from "./components/AdminDashboard";
-import MultiStepRegistration from "./components/MultiStepRegistration"; // Updated import
-import AddPaymentForm from "./components/AddPaymentForm"; // Import the new component
+import StudentDashboard from "./components/StudentDashboard";
+import MultiStepRegistration from "./components/MultiStepRegistration";
+import AddPaymentForm from "./components/AddPaymentForm";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRegister from "./pages/AdminRegister";
 
 function App() {
   const location = useLocation();
@@ -22,19 +25,53 @@ function App() {
           path="/"
           element={
             <div className="w-full max-w-md">
-              <AdminLogin />
+              <Login />
             </div>
           }
         />
 
+        {/* Admin Registration (for testing) */}
+        <Route path="/admin/register" element={<AdminRegister />} />
+
         {/* Admin Dashboard */}
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Student Dashboard */}
+        <Route 
+          path="/student/dashboard" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentDashboard />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Multi-Step Student Registration */}
-        <Route path="/admin/register-student" element={<MultiStepRegistration />} />
+        <Route 
+          path="/admin/register-student" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <MultiStepRegistration />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Add Payment Form */}
-        <Route path="/admin/payments/add" element={<AddPaymentForm />} />
+        <Route 
+          path="/admin/payments/add" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AddPaymentForm />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </div>
   );
