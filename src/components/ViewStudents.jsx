@@ -87,7 +87,7 @@ export default function ViewStudents() {
           <h1 className="text-3xl font-bold text-firebrick">View All Students</h1>
           <Link
             to="/admin/dashboard"
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+            className="bg-firebrick text-white px-4 py-2 rounded hover:bg-darkRed"
           >
             Back to Dashboard
           </Link>
@@ -109,7 +109,7 @@ export default function ViewStudents() {
             <div className="flex items-end">
               <button
                 onClick={() => setSearchTerm('')}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                className="bg-deepRed text-white px-4 py-2 rounded hover:bg-firebrick"
               >
                 Clear
               </button>

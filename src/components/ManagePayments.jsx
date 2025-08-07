@@ -90,7 +90,7 @@ export default function ManagePayments() {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/payments/add-for-student', {
+      await axios.post('http://localhost:5000/api/payments/add-for-student', {
         admission_number: selectedStudent,
         course_id: selectedCourse,
         amount_paid: parseFloat(amountPaid),

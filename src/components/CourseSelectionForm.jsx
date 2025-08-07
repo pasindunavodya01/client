@@ -37,7 +37,7 @@ const CourseSelectionForm = ({ prev, next, formData }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md mt-6">
+    <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md">
       <h2 className="text-2xl font-bold mb-4 text-[#b30d0d]">Select Courses</h2>
       {/* Debug section */}
       <div className="mb-4 text-sm text-gray-500">

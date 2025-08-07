@@ -12,6 +12,7 @@ const AddPaymentForm = ({ prev, formData: previousFormData }) => {
     amount_due: '',
     amount_paid: '',
     payment_type: 'full',
+    receipt_no: '', // Added receipt_no
   });
 
   const [selectedCourses, setSelectedCourses] = useState([]);
@@ -105,6 +106,7 @@ const handleSubmit = async (e) => {
         amount_due: remainingDue,
         amount_paid: coursePaid,
         payment_type: formData.payment_type,
+        receipt_no: formData.receipt_no, // Pass receipt_no
       };
     });
 
@@ -143,7 +145,7 @@ const handleSubmit = async (e) => {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md mt-6">
+      <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md">
         <p>Loading courses...</p>
       </div>
     );
@@ -151,14 +153,14 @@ const handleSubmit = async (e) => {
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md mt-6">
+      <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md">
         <p className="text-red-500">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md mt-6">
+    <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md">
       <h2 className="text-2xl font-bold mb-4 text-[#b30d0d]">Add Payment</h2>
       
       {/* Debug section - remove after testing */}
@@ -195,6 +197,15 @@ const handleSubmit = async (e) => {
           value={formData.admission_number} 
           onChange={handleChange} 
           placeholder="Admission Number" 
+          className="w-full px-4 py-2 border rounded-lg"
+          required 
+        />
+
+        <input 
+          name="receipt_no" 
+          value={formData.receipt_no} 
+          onChange={handleChange} 
+          placeholder="Receipt No" 
           className="w-full px-4 py-2 border rounded-lg"
           required 
         />
