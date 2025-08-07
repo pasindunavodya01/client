@@ -1,24 +1,28 @@
 import React, { useState } from "react";
 import StudentRegistrationForm from "./StudentRegistrationForm";
 import CourseSelectionForm from "./CourseSelectionForm";
-// import PaymentForm later if needed
+import AddPaymentForm from "./AddPaymentForm";
 
-export default function MultiStepRegistration() {
+const MultiStepRegistration = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({});
 
   const next = (data) => {
-    setFormData({ ...formData, ...data });
-    setStep(step + 1);
+    setFormData(prevData => ({ ...prevData, ...data }));
+    setStep(prev => prev + 1);
   };
 
-  const prev = () => setStep(step - 1);
+  const prev = () => {
+    setStep(currentStep => Math.max(1, currentStep - 1));
+  };
 
   return (
     <div>
       {step === 1 && <StudentRegistrationForm next={next} />}
       {step === 2 && <CourseSelectionForm prev={prev} next={next} formData={formData} />}
-      {/* Step 3: PaymentForm can go here */}
+      {step === 3 && <AddPaymentForm prev={prev} formData={formData} />}
     </div>
   );
-}
+};
+
+export default MultiStepRegistration;

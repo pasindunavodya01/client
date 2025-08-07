@@ -1,53 +1,189 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-const AddPaymentForm = () => {
+const AddPaymentForm = ({ prev, formData: previousFormData }) => {
+  const navigate = useNavigate();
+  // Add courses state
+  const [courses, setCourses] = useState([]);
   const [formData, setFormData] = useState({
-    admission_number: '',
+    admission_number: previousFormData?.admission_number || '',
     course_id: '',
     amount_due: '',
     amount_paid: '',
     payment_type: 'full',
   });
 
-  const [courses, setCourses] = useState([]);
+  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [totalAmount, setTotalAmount] = useState(0);
 
+  // Modified useEffect to properly handle selected courses
   useEffect(() => {
-    // Fetch courses for dropdown
-    axios.get('http://localhost:5000/api/courses') // <-- Correct route
-      .then(res => {
-        setCourses(res.data);
-        console.log('Courses loaded:', res.data); // Add this line
-      })
-      .catch(err => console.error('Error loading courses:', err));
-  }, []);
+    console.log('Previous Form Data:', previousFormData); // Debug log
 
-  const handleChange = (e) => {
-    setFormData({...formData, [e.target.name]: e.target.value });
-  };
+    if (!previousFormData?.courses?.length) {
+      setError('No courses selected');
+      setLoading(false);
+      return;
+    }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    axios.post('http://localhost:5000/api/payments/add', formData)
+    axios.get('http://localhost:5000/api/courses')
       .then(res => {
-        alert('Payment added successfully');
-        setFormData({
-          admission_number: '',
-          course_id: '',
-          amount_due: '',
-          amount_paid: '',
-          payment_type: 'full',
-        });
+        setCourses(res.data); // Set all courses
+        // Filter only the courses that were selected in the previous step
+        const selected = res.data.filter(course => 
+          previousFormData.courses.includes(course.course_id)
+        );
+        console.log('Selected Courses:', selected); // Debug log
+
+        setSelectedCourses(selected);
+
+        // Calculate total amount from selected courses
+        const total = selected.reduce((sum, course) => 
+          sum + (parseFloat(course.amount) || 0), 0
+        );
+        
+        setTotalAmount(total);
+        setFormData(prev => ({
+          ...prev,
+          amount_due: total.toString()
+        }));
+        setLoading(false);
       })
       .catch(err => {
-        console.error('Error adding payment:', err);
-        alert('Error adding payment');
+        console.error('Error loading courses:', err);
+        setError('Failed to load courses');
+        setLoading(false);
       });
+  }, [previousFormData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'course_id') {
+      const selectedCourse = courses.find(course => course.course_id === parseInt(value));
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        amount_due: selectedCourse ? selectedCourse.amount : ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+
+  try {
+    // Calculate proportional payment for each course
+    const totalDue = selectedCourses.reduce((sum, course) => sum + parseFloat(course.amount), 0);
+    const paid = parseFloat(formData.amount_paid);
+
+    // Distribute paid amount proportionally
+    let remainingPaid = paid;
+    let payments = selectedCourses.map((course, idx) => {
+      // For last course, assign all remaining to avoid rounding errors
+      let coursePaid;
+      if (idx === selectedCourses.length - 1) {
+        coursePaid = remainingPaid;
+      } else {
+        coursePaid = Math.round((paid * parseFloat(course.amount) / totalDue) * 100) / 100;
+        remainingPaid -= coursePaid;
+      }
+      return {
+        course_id: course.course_id,
+        amount_due: course.amount,
+        amount_paid: coursePaid,
+        payment_type: formData.payment_type,
+      };
+    });
+
+    const registrationData = {
+      student: { ...previousFormData },
+      courses: selectedCourses.map(course => course.course_id),
+      payments,
+      password: previousFormData.password || "TempPassword123",
+    };
+
+    await axios.post('http://localhost:5000/api/registration/full-register', registrationData);
+
+    alert('Student fully registered!');
+    navigate('/admin/dashboard');
+  } catch (err) {
+    console.error(err);
+    setError(err.response?.data?.error || 'Registration failed');
+  }
+};
+
+
+  const handleBack = () => {
+    // Try using prev function first
+    if (typeof prev === 'function') {
+      prev();
+    } else {
+      // Fallback to navigation if prev is not available
+      navigate('/admin/register-student', { 
+        state: { 
+          step: 2,  // Go back to course selection
+          formData: formData 
+        } 
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md mt-6">
+        <p>Loading courses...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md mt-6">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md mt-6">
       <h2 className="text-2xl font-bold mb-4 text-[#b30d0d]">Add Payment</h2>
+      
+      {/* Debug section - remove after testing */}
+      <div className="mb-4 text-sm text-gray-500">
+        <p>Selected Course IDs: {JSON.stringify(previousFormData?.courses)}</p>
+      </div>
+
+      {/* Selected Courses Section */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">Selected Courses:</h3>
+        <div className="bg-gray-50 p-4 rounded-lg">
+          {selectedCourses.length > 0 ? (
+            <>
+              {selectedCourses.map(course => (
+                <div key={course.course_id} className="flex justify-between py-2 border-b last:border-0">
+                  <span>{course.course_name}</span>
+                  <span className="font-semibold">Rs.{parseFloat(course.amount).toFixed(2)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-4 font-bold">
+                <span>Total Amount:</span>
+                <span>Rs.{totalAmount.toFixed(2)}</span>
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-500">No courses selected</p>
+          )}
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <input 
           name="admission_number" 
@@ -57,29 +193,14 @@ const AddPaymentForm = () => {
           className="w-full px-4 py-2 border rounded-lg"
           required 
         />
-        
-        <select 
-          name="course_id" 
-          value={formData.course_id} 
-          onChange={handleChange} 
-          className="w-full px-4 py-2 border rounded-lg"
-          required
-        >
-          <option value="">Select Course</option>
-          {courses.map(course => (
-            <option key={course.course_id} value={course.course_id}>
-              {course.course_name} - ₹{course.amount}
-            </option>
-          ))}
-        </select>
 
         <input 
           name="amount_due" 
           type="number" 
-          value={formData.amount_due} 
-          onChange={handleChange} 
+          value={formData.amount_due}
           placeholder="Amount Due" 
           className="w-full px-4 py-2 border rounded-lg"
+          readOnly
           required 
         />
         
@@ -104,12 +225,21 @@ const AddPaymentForm = () => {
           <option value="half">Half Payment</option>
         </select>
 
-        <button 
-          type="submit"
-          className="w-full bg-firebrick text-white py-2 rounded-lg hover:bg-deepRed"
-        >
-          Submit Payment
-        </button>
+        <div className="flex justify-between mt-4">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+          >
+            Back
+          </button>
+          <button
+            type="submit"
+            className="bg-firebrick text-white px-4 py-2 rounded"
+          >
+            Submit Payment
+          </button>
+        </div>
       </form>
     </div>
   );

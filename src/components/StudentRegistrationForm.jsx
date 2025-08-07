@@ -13,6 +13,7 @@ const StudentRegistrationForm = ({ next }) => {
     residential_tel: "",
     address: "",
     school: "",
+    password: "", // Added password field
   });
 
   const handleChange = (e) => {
@@ -130,6 +131,14 @@ const StudentRegistrationForm = ({ next }) => {
           value={formData.school}
           onChange={handleChange}
           placeholder="School"
+          className="w-full border p-2 rounded"
+        />
+        <input
+          type="password"
+          name="password"
+          value={formData.password || ""}
+          onChange={handleChange}
+          placeholder="Password"
           className="w-full border p-2 rounded"
         />
 
