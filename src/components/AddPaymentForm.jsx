@@ -155,13 +155,28 @@ const handleSubmit = async (e) => {
     return (
       <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md">
         <p className="text-red-500">{error}</p>
+        <button
+          type="button"
+          className="mt-4 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-700"
+          onClick={handleBack}
+        >
+          Back
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md">
-      <h2 className="text-2xl font-bold mb-4 text-[#b30d0d]">Add Payment</h2>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="max-w-2xl w-full bg-white p-6 shadow-md rounded-md mx-auto relative">
+        <button
+          type="button"
+          className="absolute top-4 right-4 bg-red-400 text-white px-4 py-2 rounded hover:bg-red-700"
+          onClick={() => navigate('/admin/dashboard')}
+        >
+          Cancel
+        </button>
+        <h2 className="text-2xl font-bold mb-4 text-[#b30d0d] text-center">Add Payment</h2>
       
       {/* Debug section - remove after testing */}
       <div className="mb-4 text-sm text-gray-500">
@@ -244,19 +259,20 @@ const handleSubmit = async (e) => {
         <div className="flex justify-between mt-4">
           <button
             type="button"
+            className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-700"
             onClick={handleBack}
-            className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
           >
             Back
           </button>
           <button
             type="submit"
-            className="bg-firebrick text-white px-4 py-2 rounded"
+            className="bg-firebrick text-white px-4 py-2 rounded hover:bg-red-700"
           >
             Submit Payment
           </button>
         </div>
       </form>
+    </div>
     </div>
   );
 };
