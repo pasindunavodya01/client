@@ -7,6 +7,7 @@ import AddPaymentForm from "./components/AddPaymentForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRegister from "./pages/AdminRegister";
 import ViewStudents from "./components/ViewStudents";
+import ManagePayments from "./components/ManagePayments";
 
 function App() {
   const location = useLocation();
@@ -50,6 +51,16 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <ViewStudents />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Manage Payments */}
+        <Route 
+          path="/admin/manage-payments" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ManagePayments />
             </ProtectedRoute>
           } 
         />

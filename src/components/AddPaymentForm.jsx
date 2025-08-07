@@ -95,9 +95,14 @@ const handleSubmit = async (e) => {
         coursePaid = Math.round((paid * parseFloat(course.amount) / totalDue) * 100) / 100;
         remainingPaid -= coursePaid;
       }
+      
+      // Calculate remaining due amount for this course
+      const courseAmount = parseFloat(course.amount);
+      const remainingDue = Math.max(0, courseAmount - coursePaid);
+      
       return {
         course_id: course.course_id,
-        amount_due: course.amount,
+        amount_due: remainingDue,
         amount_paid: coursePaid,
         payment_type: formData.payment_type,
       };
