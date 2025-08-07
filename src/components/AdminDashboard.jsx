@@ -34,6 +34,13 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
+        <Link to="/admin/view-students">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+            <h2 className="text-xl font-semibold mb-2">View All Students</h2>
+            <p className="text-gray-600">Browse and search student records.</p>
+          </div>
+        </Link>
+
         <Link to="/attendance">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Attendance</h2>

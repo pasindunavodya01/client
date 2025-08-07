@@ -6,6 +6,7 @@ import MultiStepRegistration from "./components/MultiStepRegistration";
 import AddPaymentForm from "./components/AddPaymentForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRegister from "./pages/AdminRegister";
+import ViewStudents from "./components/ViewStudents";
 
 function App() {
   const location = useLocation();
@@ -39,6 +40,16 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* View All Students */}
+        <Route 
+          path="/admin/view-students" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ViewStudents />
             </ProtectedRoute>
           } 
         />
