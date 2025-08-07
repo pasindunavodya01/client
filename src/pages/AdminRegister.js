@@ -26,7 +26,7 @@ const AdminRegister = () => {
 
   return (
     <div className="p-6 max-w-xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Register Admin</h2>
+      <h2 className="text-2xl font-bold mb-4">Register New Admin</h2>
       <form onSubmit={handleSubmit} className="space-y-3">
         {Object.keys(formData).map((key) => (
           <div key={key}>
@@ -45,7 +45,7 @@ const AdminRegister = () => {
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Register Admin
+          Register New Admin
         </button>
       </form>
     </div>

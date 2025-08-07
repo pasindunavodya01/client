@@ -75,6 +75,13 @@ export default function AdminDashboard() {
             <p className="text-gray-600">Add, edit courses and update prices.</p>
           </div>
         </Link>
+
+        <Link to="/admin/register-admin">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+            <h2 className="text-xl font-semibold mb-2">Register New Admin</h2>
+            <p className="text-gray-600">Add a new admin user to the system.</p>
+          </div>
+        </Link>
       </div>
     </div>
   );
