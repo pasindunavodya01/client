@@ -232,12 +232,7 @@ const Login = () => {
           
           <div className="text-sm text-gray-600">
             <p>Login as Admin or Student</p>
-            <Link 
-              to="/admin/register" 
-              className="text-blue-600 hover:text-blue-800 underline mt-2 inline-block"
-            >
-              Register Admin (for testing)
-            </Link>
+            
           </div>
         </div>
       </div>
