@@ -34,18 +34,21 @@ const AddPaymentForm = ({ prev, formData: previousFormData }) => {
       .then(res => {
         setCourses(res.data); // Set all courses
         // Filter only the courses that were selected in the previous step
-        const selected = res.data.filter(course => 
-          previousFormData.courses.includes(course.course_id)
-        );
+        const selected = res.data.filter(course =>
+          previousFormData.courses.some(sel => sel.course_id === course.course_id)
+        ).map(course => {
+          const sel = previousFormData.courses.find(s => s.course_id === course.course_id);
+          return { ...course, class: sel.class };
+        });
         console.log('Selected Courses:', selected); // Debug log
 
         setSelectedCourses(selected);
 
         // Calculate total amount from selected courses
-        const total = selected.reduce((sum, course) => 
+        const total = selected.reduce((sum, course) =>
           sum + (parseFloat(course.amount) || 0), 0
         );
-        
+
         setTotalAmount(total);
         setFormData(prev => ({
           ...prev,
@@ -96,11 +99,11 @@ const handleSubmit = async (e) => {
         coursePaid = Math.round((paid * parseFloat(course.amount) / totalDue) * 100) / 100;
         remainingPaid -= coursePaid;
       }
-      
+
       // Calculate remaining due amount for this course
       const courseAmount = parseFloat(course.amount);
       const remainingDue = Math.max(0, courseAmount - coursePaid);
-      
+
       return {
         course_id: course.course_id,
         amount_due: remainingDue,
@@ -112,7 +115,7 @@ const handleSubmit = async (e) => {
 
     const registrationData = {
       student: { ...previousFormData },
-      courses: selectedCourses.map(course => course.course_id),
+      courses: selectedCourses.map(course => ({ course_id: course.course_id, class: course.class })),
       payments,
       password: previousFormData.password || "TempPassword123",
     };
@@ -134,11 +137,11 @@ const handleSubmit = async (e) => {
       prev();
     } else {
       // Fallback to navigation if prev is not available
-      navigate('/admin/register-student', { 
-        state: { 
+      navigate('/admin/register-student', {
+        state: {
           step: 2,  // Go back to course selection
-          formData: formData 
-        } 
+          formData: formData
+        }
       });
     }
   };
@@ -179,7 +182,7 @@ const handleSubmit = async (e) => {
           Cancel
         </button>
         <h2 className="text-2xl font-bold mb-4 text-[#b30d0d] text-center">Add Payment</h2>
-      
+
       {/* Debug section - remove after testing */}
       <div className="mb-4 text-sm text-gray-500">
         <p>Selected Course IDs: {JSON.stringify(previousFormData?.courses)}</p>
@@ -209,48 +212,48 @@ const handleSubmit = async (e) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input 
-          name="admission_number" 
-          value={formData.admission_number} 
-          onChange={handleChange} 
-          placeholder="Admission Number" 
+        <input
+          name="admission_number"
+          value={formData.admission_number}
+          onChange={handleChange}
+          placeholder="Admission Number"
           className="w-full px-4 py-2 border rounded-lg"
-          required 
+          required
         />
 
-        <input 
-          name="receipt_no" 
-          value={formData.receipt_no} 
-          onChange={handleChange} 
-          placeholder="Receipt No" 
+        <input
+          name="receipt_no"
+          value={formData.receipt_no}
+          onChange={handleChange}
+          placeholder="Receipt No"
           className="w-full px-4 py-2 border rounded-lg"
-          required 
+          required
         />
 
-        <input 
-          name="amount_due" 
-          type="number" 
+        <input
+          name="amount_due"
+          type="number"
           value={formData.amount_due}
-          placeholder="Amount Due" 
+          placeholder="Amount Due"
           className="w-full px-4 py-2 border rounded-lg"
           readOnly
-          required 
-        />
-        
-        <input 
-          name="amount_paid" 
-          type="number" 
-          value={formData.amount_paid} 
-          onChange={handleChange} 
-          placeholder="Amount Paid" 
-          className="w-full px-4 py-2 border rounded-lg"
-          required 
+          required
         />
 
-        <select 
-          name="payment_type" 
-          value={formData.payment_type} 
-          onChange={handleChange} 
+        <input
+          name="amount_paid"
+          type="number"
+          value={formData.amount_paid}
+          onChange={handleChange}
+          placeholder="Amount Paid"
+          className="w-full px-4 py-2 border rounded-lg"
+          required
+        />
+
+        <select
+          name="payment_type"
+          value={formData.payment_type}
+          onChange={handleChange}
           className="w-full px-4 py-2 border rounded-lg"
           required
         >

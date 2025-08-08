@@ -23,9 +23,18 @@ const CourseSelectionForm = ({ prev, next, formData }) => {
   }, []);
 
   const toggleCourse = (id) => {
-    console.log("Toggling course:", id); // Debug log
     setSelectedCourses((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      prev.some((c) => c.course_id === id)
+        ? prev.filter((c) => c.course_id !== id)
+        : [...prev, { course_id: id, class: 'A' }]
+    );
+  };
+
+  const handleClassChange = (id, newClass) => {
+    setSelectedCourses((prev) =>
+      prev.map((c) =>
+        c.course_id === id ? { ...c, class: newClass } : c
+      )
     );
   };
 
@@ -33,7 +42,7 @@ const CourseSelectionForm = ({ prev, next, formData }) => {
     e.preventDefault();
     const updatedFormData = {
       ...formData,
-      courses: selectedCourses
+      courses: selectedCourses // now includes class info
     };
     next(updatedFormData);
   };
@@ -71,17 +80,31 @@ const CourseSelectionForm = ({ prev, next, formData }) => {
           <p>Selected courses: {JSON.stringify(selectedCourses)}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {courses.map((course) => (
-            <label key={course.course_id} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                value={course.course_id}
-                checked={selectedCourses.includes(course.course_id)}
-                onChange={() => toggleCourse(course.course_id)}
-              />
-              {course.course_name} - Rs.{course.amount}
-            </label>
-          ))}
+          {courses.map((course) => {
+            const selected = selectedCourses.find((c) => c.course_id === course.course_id);
+            return (
+              <div key={course.course_id} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!selected}
+                  onChange={() => toggleCourse(course.course_id)}
+                />
+                {course.course_name} - Rs.{course.amount}
+                {selected && (
+                  <select
+                    value={selected.class}
+                    onChange={(e) => handleClassChange(course.course_id, e.target.value)}
+                    className="ml-2"
+                  >
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
+                )}
+              </div>
+            );
+          })}
 
           <div className="flex justify-between mt-4">
             <button
