@@ -82,6 +82,15 @@ export default function AdminDashboard() {
             <p className="text-gray-600">Add a new admin user to the system.</p>
           </div>
         </Link>
+
+        <Link to="/admin/view-admins">
+  <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+    <h2 className="text-xl font-semibold mb-2">View All Admins</h2>
+    <p className="text-gray-600">List of all admin users in the system.</p>
+  </div>
+</Link>
+
+
       </div>
     </div>
   );

@@ -10,6 +10,8 @@ import ViewStudents from "./components/ViewStudents";
 import ManagePayments from "./components/ManagePayments";
 import ManageCourses from "./components/ManageCourses";
 import AdminRegisterAdmin from "./pages/AdminRegisterAdmin";
+import ViewAdmins from "./components/ViewAdmins";
+
 
 function App() {
   const location = useLocation();
@@ -116,9 +118,21 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+
+<Route
+  path="/admin/view-admins"
+  element={
+    <ProtectedRoute requiredRole="admin">
+      <ViewAdmins />
+    </ProtectedRoute>
+  }
+/>
+
       </Routes>
     </div>
   );
 }
+
 
 export default App;
