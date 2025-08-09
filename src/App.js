@@ -13,6 +13,7 @@ import AdminRegisterAdmin from "./pages/AdminRegisterAdmin";
 import ViewAdmins from "./components/ViewAdmins";
 
 
+
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === "/";
@@ -119,15 +120,15 @@ function App() {
           } 
         />
 
-
-<Route
-  path="/admin/view-admins"
-  element={
-    <ProtectedRoute requiredRole="admin">
-      <ViewAdmins />
-    </ProtectedRoute>
-  }
-/>
+        {/* Admin View All Admins */}
+        <Route
+          path="/admin/view-admins"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ViewAdmins />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
     </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import axios from 'axios';
+import Hero from './Hero'; // Make sure this path is correct
 
 export default function StudentDashboard() {
   const [studentData, setStudentData] = useState(null);
@@ -66,7 +67,11 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto">
+      {/* Hero full width */}
+      <Hero />
+
+      {/* Dashboard content centered */}
+      <div className="max-w-4xl mx-auto mt-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-firebrick">Student Dashboard</h1>
@@ -144,3 +149,4 @@ export default function StudentDashboard() {
     </div>
   );
 }
+
