@@ -7,7 +7,7 @@ const ManageCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Form states
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -15,6 +15,7 @@ const ManageCourses = () => {
     course_name: '',
     amount: ''
   });
+  const [classes, setClasses] = useState([]);
 
   useEffect(() => {
     fetchCourses();
@@ -38,20 +39,41 @@ const ManageCourses = () => {
     });
   };
 
+  const handleClassChange = (index, newName) => {
+    const newClasses = [...classes];
+    newClasses[index].class_name = newName;
+    setClasses(newClasses);
+  };
+
+  const addClass = () => {
+    setClasses([...classes, { class_name: '' }]);
+  };
+
+  const removeClass = (index) => {
+    const newClasses = [...classes];
+    newClasses.splice(index, 1);
+    setClasses(newClasses);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       if (editingCourse) {
-        // Update existing course
-        await axios.put(`http://localhost:5000/api/courses/${editingCourse.course_id}`, formData);
-        alert('Course updated successfully!');
+        await axios.put(`http://localhost:5000/api/courses/${editingCourse.course_id}`, {
+          ...formData,
+          classes
+        });
+        alert('Course and classes updated successfully!');
       } else {
-        // Add new course
-        await axios.post('http://localhost:5000/api/courses', formData);
-        alert('Course added successfully!');
+        await axios.post('http://localhost:5000/api/courses', {
+          ...formData,
+          classes
+        });
+        alert('Course and classes added successfully!');
       }
-      
       setFormData({ course_name: '', amount: '' });
+      setClasses([]);
       setEditingCourse(null);
       setShowAddForm(false);
       fetchCourses();
@@ -66,6 +88,10 @@ const ManageCourses = () => {
       course_name: course.course_name,
       amount: course.amount.toString()
     });
+    setClasses(course.classes.length ? course.classes.map(c => ({
+      class_id: c.class_id,
+      class_name: c.class_name
+    })) : []);
     setShowAddForm(true);
   };
 
@@ -83,6 +109,7 @@ const ManageCourses = () => {
 
   const handleCancel = () => {
     setFormData({ course_name: '', amount: '' });
+    setClasses([]);
     setEditingCourse(null);
     setShowAddForm(false);
   };
@@ -97,7 +124,8 @@ const ManageCourses = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen w-full">
-      <div className="max-w-4xl w-full bg-white p-6 shadow-md rounded-md mx-auto">
+      <div className="max-w-6xl w-full bg-white p-6 shadow-md rounded-md mx-auto">
+
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-[#b30d0d]">Manage Courses</h2>
           <div className="space-x-2">
@@ -153,7 +181,40 @@ const ManageCourses = () => {
                   step="0.01"
                 />
               </div>
-              <div className="flex space-x-2">
+
+              {/* Classes Section */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Classes</label>
+                {classes.map((cls, idx) => (
+                  <div key={cls.class_id || idx} className="flex items-center mb-2 gap-2">
+                    <input
+                      type="text"
+                      value={cls.class_name}
+                      onChange={(e) => handleClassChange(idx, e.target.value)}
+                      className="px-3 py-2 border rounded-lg flex-grow"
+                      placeholder="Class Name (e.g., A, B)"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeClass(idx)}
+                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800"
+                      aria-label="Remove Class"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addClass}
+                  className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-800"
+                >
+                  + Add Class
+                </button>
+              </div>
+
+              <div className="flex space-x-2 mt-4">
                 <button
                   type="submit"
                   className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -187,6 +248,9 @@ const ManageCourses = () => {
                   Amount (Rs.)
                 </th>
                 <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Classes
+                </th>
+                <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -202,6 +266,11 @@ const ManageCourses = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     Rs. {parseFloat(course.amount).toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {course.classes.length > 0
+                      ? course.classes.map(c => c.class_name).join(', ')
+                      : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button

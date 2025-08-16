@@ -4,17 +4,14 @@ import { useNavigate } from "react-router-dom";
 
 const CourseSelectionForm = ({ prev, next, formData }) => {
   const [courses, setCourses] = useState([]);
-  // Initialize selectedCourses with existing courses if any
   const [selectedCourses, setSelectedCourses] = useState(formData?.courses || []);
   const navigate = useNavigate();
 
-  // Fetch courses from backend
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/courses");
         setCourses(res.data);
-        console.log("Available courses:", res.data); // Debug log
       } catch (err) {
         console.error("Failed to fetch courses:", err);
       }
@@ -22,28 +19,25 @@ const CourseSelectionForm = ({ prev, next, formData }) => {
     fetchCourses();
   }, []);
 
-  const toggleCourse = (id) => {
+  const toggleCourse = (course) => {
     setSelectedCourses((prev) =>
-      prev.some((c) => c.course_id === id)
-        ? prev.filter((c) => c.course_id !== id)
-        : [...prev, { course_id: id, class: 'A' }]
+      prev.some((c) => c.course_id === course.course_id)
+        ? prev.filter((c) => c.course_id !== course.course_id)
+        : [...prev, { course_id: course.course_id, class_id: null }]
     );
   };
 
-  const handleClassChange = (id, newClass) => {
+  const handleClassChange = (course_id, class_id) => {
     setSelectedCourses((prev) =>
       prev.map((c) =>
-        c.course_id === id ? { ...c, class: newClass } : c
+        c.course_id === course_id ? { ...c, class_id } : c
       )
     );
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const updatedFormData = {
-      ...formData,
-      courses: selectedCourses // now includes class info
-    };
+    const updatedFormData = { ...formData, courses: selectedCourses };
     next(updatedFormData);
   };
 
@@ -74,32 +68,36 @@ const CourseSelectionForm = ({ prev, next, formData }) => {
         >
           Cancel
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-[#b30d0d] text-center">Select Courses</h2>
-        {/* Debug section */}
-        <div className="mb-4 text-sm text-gray-500">
-          <p>Selected courses: {JSON.stringify(selectedCourses)}</p>
-        </div>
+        <h2 className="text-2xl font-bold mb-4 text-[#b30d0d] text-center">
+          Select Courses
+        </h2>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {courses.map((course) => {
             const selected = selectedCourses.find((c) => c.course_id === course.course_id);
             return (
-              <div key={course.course_id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={!!selected}
-                  onChange={() => toggleCourse(course.course_id)}
-                />
-                {course.course_name} - Rs.{course.amount}
-                {selected && (
+              <div key={course.course_id} className="flex flex-col gap-2 border p-3 rounded-md">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={!!selected}
+                    onChange={() => toggleCourse(course)}
+                  />
+                  {course.course_name} - Rs.{course.amount}
+                </label>
+
+                {selected && course.classes.length > 0 && (
                   <select
-                    value={selected.class}
+                    value={selected.class_id || ""}
                     onChange={(e) => handleClassChange(course.course_id, e.target.value)}
-                    className="ml-2"
+                    className="border rounded px-2 py-1"
                   >
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
+                    <option value="">Select class</option>
+                    {course.classes.map((cls) => (
+                      <option key={cls.class_id} value={cls.class_id}>
+                        {cls.class_name}
+                      </option>
+                    ))}
                   </select>
                 )}
               </div>
