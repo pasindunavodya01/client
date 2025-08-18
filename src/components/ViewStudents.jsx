@@ -10,6 +10,62 @@ export default function ViewStudents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  // Inside ViewStudents component, after isEditing & editForm states
+const [noteEditing, setNoteEditing] = useState(false);
+const [noteValue, setNoteValue] = useState('');
+const [showNotesList, setShowNotesList] = useState(false);
+const [studentsWithNotes, setStudentsWithNotes] = useState([]);
+
+//Function to fetch students with notes:
+const fetchStudentsWithNotes = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/api/students/with-notes');
+    setStudentsWithNotes(response.data.students);
+    setShowNotesList(true);
+  } catch (err) {
+    console.error('Error fetching students with notes:', err);
+    alert('Failed to load students with notes');
+  }
+};
+
+
+// Whenever a student is selected, load the note
+useEffect(() => {
+  if (selectedStudent) {
+    setNoteValue(selectedStudent.student.special_note || '');
+  }
+}, [selectedStudent]);
+
+// Function to save note
+const saveNote = async () => {
+  try {
+    await axios.put(
+      `http://localhost:5000/api/students/${selectedStudent.student.uid}/note`,
+      { special_note: noteValue }
+    );
+    alert('Note saved successfully');
+    // Refresh student details
+    handleStudentClick(selectedStudent.student);
+    setNoteEditing(false);
+  } catch (err) {
+    console.error('Error saving note:', err);
+    alert('Failed to save note');
+  }
+};
+
+ 
+
+
+
+
+  useEffect(() => {
+  if (selectedStudent && isEditing) {
+    setEditForm(selectedStudent.student);
+  }
+}, [isEditing, selectedStudent]);
+
 
   useEffect(() => {
     fetchAllStudents();
@@ -84,13 +140,21 @@ export default function ViewStudents() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-firebrick">View All Students</h1>
-          <Link
+           <Link
             to="/admin/dashboard"
             className="bg-firebrick text-white px-4 py-2 rounded hover:bg-darkRed"
           >
             Back to Dashboard
           </Link>
+          <h1 className="text-3xl font-bold text-firebrick">View All Students</h1>
+          <button
+  onClick={fetchStudentsWithNotes}
+  className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 ml-4"
+>
+  View Students with Notes
+</button>
+         
+
         </div>
 
         {/* Search Bar */}
@@ -119,6 +183,8 @@ export default function ViewStudents() {
             Found {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
           </p>
         </div>
+
+        
 
         {/* Students List */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -179,6 +245,42 @@ export default function ViewStudents() {
           </div>
         </div>
 
+
+
+        {/* Students with Notes List */}
+        {showNotesList && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-firebrick">Students with Notes</h2>
+        <button
+          onClick={() => setShowNotesList(false)}
+          className="text-gray-500 hover:text-gray-700 text-2xl"
+        >
+          ×
+        </button>
+      </div>
+      {studentsWithNotes.length > 0 ? (
+        <div className="space-y-3">
+          {studentsWithNotes.map((student) => (
+            <div key={student.uid} className="bg-yellow-50 p-4 rounded-lg">
+              <p><strong>Name:</strong> {student.name}</p>
+              <p><strong>Admission Number:</strong> {student.admission_number}</p>
+              <p><strong>Email:</strong> {student.email}</p>
+              <p><strong>Batch:</strong> {student.batch}</p>
+              <p><strong>Phone:</strong> {student.whatsapp_number}</p>
+              <p><strong>Note:</strong> {student.special_note}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p>No students with notes found.</p>
+      )}
+    </div>
+  </div>
+)}
+
+
         {/* Student Details Modal */}
         {showStudentDetails && selectedStudent && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -197,28 +299,187 @@ export default function ViewStudents() {
                 </div>
 
                 {/* Student Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3">Personal Information</h3>
-                    <div className="space-y-2">
-                      <p><strong>Name:</strong> {selectedStudent.student.name}</p>
-                      <p><strong>Admission Number:</strong> {selectedStudent.student.admission_number}</p>
-                      <p><strong>Email:</strong> {selectedStudent.student.email}</p>
-                      <p><strong>Batch:</strong> {selectedStudent.student.batch}</p>
-                      <p><strong>Gender:</strong> {selectedStudent.student.gender}</p>
-                      <p><strong>NIC Number:</strong> {selectedStudent.student.nic_number}</p>
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3">Contact Information</h3>
-                    <div className="space-y-2">
-                      <p><strong>WhatsApp:</strong> {selectedStudent.student.whatsapp_number}</p>
-                      <p><strong>Phone:</strong> {selectedStudent.student.residential_tel}</p>
-                      <p><strong>School:</strong> {selectedStudent.student.school}</p>
-                      <p><strong>Address:</strong> {selectedStudent.student.address}</p>
-                    </div>
-                  </div>
-                </div>
+{isEditing ? (
+  <form
+    onSubmit={async (e) => {
+      e.preventDefault();
+      try {
+        await axios.put(
+          `http://localhost:5000/api/students/update/${selectedStudent.student.uid}`,
+          editForm
+        );
+        alert("Student updated successfully!");
+        setIsEditing(false);
+        fetchAllStudents(); // refresh list
+        handleStudentClick(selectedStudent.student); // refresh details
+      } catch (err) {
+        console.error("Update error:", err);
+        alert("Failed to update student.");
+      }
+    }}
+    className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
+  >
+    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+      <label className="block">
+        <span className="text-gray-700">Name</span>
+        <input
+          type="text"
+          value={editForm.name || ""}
+          onChange={(e) =>
+            setEditForm({ ...editForm, name: e.target.value })
+          }
+          className="mt-1 block w-full border rounded p-2"
+        />
+      </label>
+      <label className="block">
+        <span className="text-gray-700">Admission Number</span>
+        <input
+          type="text"
+          value={editForm.admission_number || ""}
+          onChange={(e) =>
+            setEditForm({ ...editForm, admission_number: e.target.value })
+          }
+          className="mt-1 block w-full border rounded p-2"
+        />
+      </label>
+      <label className="block">
+        <span className="text-gray-700">Email</span>
+        <input
+          type="email"
+          value={editForm.email || ""}
+          onChange={(e) =>
+            setEditForm({ ...editForm, email: e.target.value })
+          }
+          className="mt-1 block w-full border rounded p-2"
+        />
+      </label>
+    </div>
+
+    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+      <label className="block">
+        <span className="text-gray-700">WhatsApp No</span>
+        <input
+          type="text"
+          value={editForm.whatsapp_number || ""}
+          onChange={(e) =>
+            setEditForm({ ...editForm, whatsapp_number: e.target.value })
+          }
+          className="mt-1 block w-full border rounded p-2"
+        />
+      </label>
+      <label className="block">
+        <span className="text-gray-700">Residential No</span>
+        <input
+          type="text"
+          value={editForm.residential_tel || ""}
+          onChange={(e) =>
+            setEditForm({ ...editForm, residential_tel: e.target.value })
+          }
+          className="mt-1 block w-full border rounded p-2"
+        />
+      </label>
+      <label className="block">
+        <span className="text-gray-700">Address</span>
+        <input
+          type="text"
+          value={editForm.address || ""}
+          onChange={(e) =>
+            setEditForm({ ...editForm, address: e.target.value })
+          }
+          className="mt-1 block w-full border rounded p-2"
+        />
+      </label>
+    </div>
+
+    <div className="col-span-2 flex justify-end gap-3 mt-4">
+      <button
+        type="button"
+        onClick={() => setIsEditing(false)}
+        className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+      >
+        Save Changes
+      </button>
+    </div>
+  </form>
+) : (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div className="bg-gray-50 p-4 rounded-lg">
+      <h3 className="text-lg font-semibold mb-3">Personal Information</h3>
+      <div className="space-y-2">
+        <p><strong>Name:</strong> {selectedStudent.student.name}</p>
+        <p><strong>Admission Number:</strong> {selectedStudent.student.admission_number}</p>
+        <p><strong>Email:</strong> {selectedStudent.student.email}</p>
+        <p><strong>Batch:</strong> {selectedStudent.student.batch}</p>
+        <p><strong>Gender:</strong> {selectedStudent.student.gender}</p>
+        <p><strong>NIC Number:</strong> {selectedStudent.student.nic_number}</p>
+      </div>
+    </div>
+    <div className="bg-gray-50 p-4 rounded-lg">
+      <h3 className="text-lg font-semibold mb-3">Contact Information</h3>
+      <div className="space-y-2">
+        <p><strong>WhatsApp:</strong> {selectedStudent.student.whatsapp_number}</p>
+        <p><strong>Phone:</strong> {selectedStudent.student.residential_tel}</p>
+        <p><strong>School:</strong> {selectedStudent.student.school}</p>
+        <p><strong>Address:</strong> {selectedStudent.student.address}</p>
+      </div>
+    </div>
+    <div className="col-span-2 flex justify-end mt-4">
+      <button
+        onClick={() => setIsEditing(true)}
+        className="bg-deepRed text-white px-4 py-2 rounded hover:bg-darkRed"
+      >
+        Edit Student
+      </button>
+    </div>
+  </div>
+)}
+
+{/* Special Note */}
+<div className="bg-yellow-50 p-4 rounded-lg mb-6">
+  <h3 className="text-lg font-semibold mb-2">Special Note</h3>
+  {noteEditing ? (
+    <div className="space-y-2">
+      <textarea
+        value={noteValue}
+        onChange={(e) => setNoteValue(e.target.value)}
+        className="w-full border rounded p-2"
+        rows={4}
+      ></textarea>
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setNoteEditing(false)}
+          className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={saveNote}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Save Note
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="flex justify-between items-center">
+      <p>{noteValue || 'No special note added.'}</p>
+      <button
+        onClick={() => setNoteEditing(true)}
+        className="bg-gold text-white px-3 py-1 rounded hover:bg-firebrick"
+      >
+        Edit Note
+      </button>
+    </div>
+  )}
+</div>
+
+
 
                 {/* Enrolled Courses */}
                 <div className="mb-6">
@@ -268,4 +529,5 @@ export default function ViewStudents() {
       </div>
     </div>
   );
+  
 }
