@@ -11,6 +11,8 @@ import ManagePayments from "./components/ManagePayments";
 import ManageCourses from "./components/ManageCourses";
 import AdminRegisterAdmin from "./pages/AdminRegisterAdmin";
 import ViewAdmins from "./components/ViewAdmins";
+import StudentUpdateRequests from "./components/StudentUpdateRequests";
+
 
 
 
@@ -129,7 +131,14 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+<Route
+          path="/admin/view-students-requests"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <StudentUpdateRequests />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );
