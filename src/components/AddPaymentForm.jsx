@@ -155,10 +155,12 @@ const handleSubmit = async (e) => {
   }
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="max-w-2xl mx-auto bg-white p-6 shadow-md rounded-md">
-          <p className="text-red-500">{error}</p>
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="max-w-4xl w-full bg-white p-8 shadow-lg rounded-lg mx-4">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+        <p className="text-red-700 mb-6">{error}</p>
+        <div className="flex justify-start">
           <button
             type="button"
             className="mt-4 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-700"
@@ -168,8 +170,10 @@ const handleSubmit = async (e) => {
           </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   return (
     <div className="flex items-center justify-center min-h-screen">

@@ -52,7 +52,7 @@ export default function StudentUpdateRequests() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full">
+    <div className="flex items-center justify-center min-h-screen w-full p-10">
       <div className="max-w-4xl w-full bg-white p-6 shadow-md rounded-md mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-[#b30d0d]">
