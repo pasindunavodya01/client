@@ -1,23 +1,40 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { auth } from '../firebase';
-import Hero from './Hero'; // ✅ Import Hero component
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { auth } from "../firebase";
+import Hero from "./Hero"; 
+import axios from "axios"; // ✅ import axios
+ 
 
 export default function AdminDashboard() {
+  const [pendingCount, setPendingCount] = useState(0); // ✅ state for bubble
+
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      window.location.href = '/';
+      window.location.href = "/";
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error("Logout error:", err);
     }
   };
 
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/students/requests");
+        const pending = res.data.requests.filter((r) => r.status === "pending").length;
+        setPendingCount(pending);
+      } catch (err) {
+        console.error("Error fetching pending requests:", err);
+      }
+    };
+
+    fetchPendingRequests();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      
       {/* ✅ Hero Section */}
-      <Hero 
+      <Hero
         title="Welcome, Admin!"
         subtitle="Manage students, courses, and payments all in one place."
       />
@@ -33,6 +50,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Other cards... */}
+        
+
+    
         <Link to="/admin/register-student">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Register Students</h2>
@@ -68,13 +89,7 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <Link to="/fees">
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Course Fees</h2>
-            <p className="text-gray-600">Track online payments and fees.</p>
-          </div>
-        </Link>
-
+        
         <Link to="/admin/manage-courses">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Manage Courses</h2>
@@ -82,24 +97,24 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <Link to="/admin/register-admin">
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Register New Admin</h2>
-            <p className="text-gray-600">Add a new admin user to the system.</p>
-          </div>
-        </Link>
-
         <Link to="/admin/view-admins">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">View All Admins</h2>
-            <p className="text-gray-600">List of all admin users in the system.</p>
+            <h2 className="text-xl font-semibold mb-2">View/Add Admins</h2>
+            <p className="text-gray-600">View/Add admin users in the system.</p>
           </div>
         </Link>
 
-                <Link to="/admin/view-students-requests">
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
+        <Link to="/admin/view-students-requests">
+          <div className="relative bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Students Update Requests</h2>
             <p className="text-gray-600">List of all student update requests.</p>
+
+            {/* 🔴 Notification Bubble */}
+            {pendingCount > 0 && (
+              <span className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                {pendingCount}
+              </span>
+            )}
           </div>
         </Link>
       </div>
