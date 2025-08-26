@@ -38,7 +38,8 @@ const AddPaymentForm = ({ prev, formData: previousFormData }) => {
           previousFormData.courses.some(sel => sel.course_id === course.course_id)
         ).map(course => {
           const sel = previousFormData.courses.find(s => s.course_id === course.course_id);
-          return { ...course, class: sel.class };
+          return { ...course, class_id: sel.class_id };
+
         });
         console.log('Selected Courses:', selected); // Debug log
 
@@ -115,7 +116,8 @@ const handleSubmit = async (e) => {
 
     const registrationData = {
       student: { ...previousFormData },
-      courses: selectedCourses.map(course => ({ course_id: course.course_id, class: course.class })),
+      courses: selectedCourses.map(course => ({ course_id: course.course_id, class_id: course.class_id })),
+
       payments,
       password: previousFormData.password || "TempPassword123",
     };
