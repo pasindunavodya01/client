@@ -12,6 +12,7 @@ import ManageCourses from "./components/ManageCourses";
 import AdminRegisterAdmin from "./pages/AdminRegisterAdmin";
 import ViewAdmins from "./components/ViewAdmins";
 import StudentUpdateRequests from "./components/StudentUpdateRequests";
+import AttendancePage from "./components/AttendancePage";
 
 
 
@@ -139,7 +140,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/admin/attendance"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AttendancePage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+
+
     </div>
   );
 }

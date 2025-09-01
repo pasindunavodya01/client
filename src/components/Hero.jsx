@@ -16,6 +16,7 @@ export default function Hero() {
           <span className="text-gold">
             Information Technology & Distance Learning Hub 
           </span>
+         {" "} - Negombo
         </h1>
       </div>
 

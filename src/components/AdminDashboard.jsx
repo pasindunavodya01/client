@@ -63,7 +63,7 @@ export default function AdminDashboard() {
 
         <Link to="/admin/view-students">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">View All Students</h2>
+            <h2 className="text-xl font-semibold mb-2">Manage Students</h2>
             <p className="text-gray-600">Browse and search student records.</p>
           </div>
         </Link>
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <Link to="/attendance">
+        <Link to="/admin/attendance">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Attendance</h2>
             <p className="text-gray-600">Mark and track student attendance.</p>
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
 
         <Link to="/admin/view-admins">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">View/Add Admins</h2>
+            <h2 className="text-xl font-semibold mb-2">Manage Admins</h2>
             <p className="text-gray-600">View/Add admin users in the system.</p>
           </div>
         </Link>
