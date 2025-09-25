@@ -13,32 +13,18 @@ import AdminRegisterAdmin from "./pages/AdminRegisterAdmin";
 import ViewAdmins from "./components/ViewAdmins";
 import StudentUpdateRequests from "./components/StudentUpdateRequests";
 import AttendancePage from "./components/AttendancePage";
-
-
-
+import MarksPage from "./components/Marks";
+import StudentMarks from "./components/StudentMarks";
 
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === "/";
 
   return (
-    <div
-      className={`${
-        isLoginPage
-          ? "min-h-screen flex items-center justify-center px-4 bg-gray-100"
-          : "bg-gray-100 min-h-screen"
-      }`}
-    >
+    <div className={isLoginPage ? "min-h-screen" : "bg-gray-100 min-h-screen"}>
       <Routes>
         {/* Login Page */}
-        <Route
-          path="/"
-          element={
-            <div className="w-full max-w-md">
-              <Login />
-            </div>
-          }
-        />
+        <Route path="/" element={<Login />} />
 
         {/* Admin Registration (for testing) */}
         <Route path="/admin/register" element={<AdminRegister />} />
@@ -93,6 +79,16 @@ function App() {
           } 
         />
 
+      {/* Student Marks */}
+      <Route 
+        path="/student/marks" 
+        element={
+          <ProtectedRoute requiredRole="student">
+            <StudentMarks />
+          </ProtectedRoute>
+        }
+      />
+
         {/* Multi-Step Student Registration */}
         <Route 
           path="/admin/register-student" 
@@ -132,7 +128,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-<Route
+
+        {/* Student Update Requests */}
+        <Route
           path="/admin/view-students-requests"
           element={
             <ProtectedRoute requiredRole="admin">
@@ -141,6 +139,7 @@ function App() {
           }
         />
 
+        {/* Attendance Page */}
         <Route
           path="/admin/attendance"
           element={
@@ -149,12 +148,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Marks Page */}
+        <Route
+          path="/admin/marks"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <MarksPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-
-
     </div>
   );
 }
-
 
 export default App;

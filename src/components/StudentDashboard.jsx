@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { auth } from "../firebase";
 import axios from "axios";
 import Hero from "./Hero"; // Make sure this path is correct
+import { Link } from "react-router-dom";
 
 export default function StudentDashboard() {
   const [studentData, setStudentData] = useState(null);
@@ -120,12 +121,20 @@ export default function StudentDashboard() {
           <h1 className="text-3xl font-bold text-firebrick">
             Student Dashboard
           </h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/student/marks"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              View Marks
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Student Information */}

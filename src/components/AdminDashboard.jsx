@@ -82,7 +82,7 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <Link to="/marks">
+        <Link to="/admin/marks">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Marks & Eligibility</h2>
             <p className="text-gray-600">Check eligibility and update marks.</p>

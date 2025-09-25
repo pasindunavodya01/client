@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
+// eslint-disable-next-line
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -178,66 +179,87 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="max-w-md w-full bg-white p-8 shadow-md rounded-xl">
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
-        
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-darkRed to-deepRed">
+    
+    {/* Branding Header + Login Card */}
+    <div className="w-full max-w-md mx-4">
+      
+      {/* Branding Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-extrabold text-white">
+          Student Management System
+        </h1>
+        <p className="text-lg text-gold mt-2">
+          Information Technology & Distance Learning Hub (ITDLH - Negombo)
+        </p>
+      </div>
+
+      {/* Login Card */}
+      <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-firebrick">
+        <h2 className="text-2xl font-bold text-center mb-6 text-darkRed">
+          Login
+        </h2>
+
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm">
+          <div className="mb-4 p-3 bg-firebrick/10 border border-firebrick text-firebrick rounded text-sm text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-gray-600 mb-1">Email</label>
+            <label className="block text-gray-700 mb-1">Email</label>
             <input
               type="email"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:border-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-firebrick"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              placeholder="Enter your email"
             />
           </div>
 
           <div>
-            <label className="block text-gray-600 mb-1">Password</label>
+            <label className="block text-gray-700 mb-1">Password</label>
             <input
               type="password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:border-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-firebrick"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
+              placeholder="Enter your password"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-firebrick text-white py-2 rounded-lg hover:bg-deepRed transition duration-200 disabled:opacity-50"
+            className="w-full bg-firebrick text-white font-bold py-2 rounded-lg shadow-md hover:bg-deepRed transition duration-200 disabled:opacity-50"
             disabled={loading}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
+        {/* Extra Actions */}
         <div className="mt-6 text-center space-y-3">
           <button
             onClick={() => setShowResetForm(true)}
-            className="text-blue-600 hover:text-blue-800 underline text-sm block w-full"
+            className="text-firebrick hover:text-deepRed underline text-sm block w-full"
           >
             Forgot Password?
           </button>
-          
-          <div className="text-sm text-gray-600">
-            <p>Login as Admin or Student</p>
-            
-          </div>
+          <p className="text-xs text-gray-600">
+            Access for <span className="font-semibold text-darkRed">Students</span> & <span className="font-semibold text-darkRed">Admins</span>
+          </p>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
+
 };
 
 export default Login;
