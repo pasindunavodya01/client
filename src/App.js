@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import Login from "./components/Login";
+import PublicHomePage from "./components/PublicHomePage";
 import AdminDashboard from "./components/AdminDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 import MultiStepRegistration from "./components/MultiStepRegistration";
@@ -18,14 +19,15 @@ import StudentMarks from "./components/StudentMarks";
 
 function App() {
   const location = useLocation();
-  const isLoginPage = location.pathname === "/";
+  const isLoginPage = location.pathname === "/login";
 
   return (
     <div className={isLoginPage ? "min-h-screen" : "bg-gray-100 min-h-screen"}>
       <Routes>
+        {/* Public Homepage */}
+        <Route path="/" element={<PublicHomePage />} />
         {/* Login Page */}
-        <Route path="/" element={<Login />} />
-
+        <Route path="/login" element={<Login />} />
         {/* Admin Registration (for testing) */}
         <Route path="/admin/register" element={<AdminRegister />} />
 
