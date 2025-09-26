@@ -245,51 +245,61 @@ const PublicHomePage = () => {
   );
 };
 
-// ChatBot Component
 const ChatBot = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
   const toggleOpen = () => setOpen(!open);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages([...messages, { from: 'user', text: input }]);
 
-    // Placeholder bot response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { from: 'bot', text: "Hello! How can I assist you today?" }]);
-    }, 500);
+    const userMessage = { from: "user", text: input };
+    setMessages(prev => [...prev, userMessage]);
 
-    setInput('');
+    try {
+      const res = await axios.post("http://localhost:5000/api/chatbot", { message: input });
+      const botMessage = { from: "bot", text: res.data.reply };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      setMessages(prev => [...prev, { from: "bot", text: "⚠️ Error connecting to server." }]);
+    }
+
+    setInput("");
   };
 
   return (
-    <div className="flex flex-col items-end">
+    <div className="flex flex-col items-end fixed bottom-5 right-5 z-50">
       {open && (
         <div className="w-80 h-96 bg-white shadow-lg rounded-lg flex flex-col overflow-hidden mb-3">
+          {/* Header */}
           <div className="bg-firebrick text-white px-4 py-2 flex justify-between items-center">
             <span className="font-bold">ITDLH ChatBot</span>
             <button onClick={toggleOpen}><FaTimes /></button>
           </div>
 
+          {/* Messages */}
           <div className="flex-1 p-3 overflow-y-auto flex flex-col gap-2">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`p-2 rounded-lg max-w-[75%] ${
-                  msg.from === 'user' ? 'bg-firebrick text-white self-end' : 'bg-gray-200 text-gray-800 self-start'
+                  msg.from === "user"
+                    ? "bg-firebrick text-white self-end"
+                    : "bg-gray-200 text-gray-800 self-start"
                 }`}
+                style={{ whiteSpace: "pre-wrap" }} // ✅ preserve line breaks
               >
                 {msg.text}
               </div>
@@ -297,6 +307,7 @@ const ChatBot = () => {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Input */}
           <div className="p-2 border-t border-gray-300 flex gap-2">
             <input
               type="text"
@@ -304,9 +315,14 @@ const ChatBot = () => {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
               className="flex-1 border rounded px-3 py-2 focus:outline-none"
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
             />
-            <button onClick={handleSend} className="bg-firebrick text-white px-4 py-2 rounded hover:bg-red-700">Send</button>
+            <button
+              onClick={handleSend}
+              className="bg-firebrick text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Send
+            </button>
           </div>
         </div>
       )}
@@ -322,5 +338,4 @@ const ChatBot = () => {
     </div>
   );
 };
-
 export default PublicHomePage;
