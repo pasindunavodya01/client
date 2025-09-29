@@ -16,6 +16,7 @@ import StudentUpdateRequests from "./components/StudentUpdateRequests";
 import AttendancePage from "./components/AttendancePage";
 import MarksPage from "./components/Marks";
 import StudentMarks from "./components/StudentMarks";
+import ChatbotManager from "./components/ChatbotManager"; // Import the new component
 
 function App() {
   const location = useLocation();
@@ -159,6 +160,16 @@ function App() {
               <MarksPage />
             </ProtectedRoute>
           }
+        />
+
+        {/* Manage Chatbot */}
+        <Route 
+          path="/admin/manage-chatbot" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ChatbotManager />
+            </ProtectedRoute>
+          } 
         />
       </Routes>
     </div>

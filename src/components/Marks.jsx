@@ -2,41 +2,28 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
-const LessonBasedExamManagement = () => {
-  const [activeTab, setActiveTab] = useState('lessons');
+const ExamManagement = () => {
+  const [activeTab, setActiveTab] = useState('eligibility');
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
-  const [lessons, setLessons] = useState([]);
-  const [selectedLesson, setSelectedLesson] = useState(null);
-  const [lessonStudents, setLessonStudents] = useState([]);
-  const [finalGrades, setFinalGrades] = useState([]);
-  const [statistics, setStatistics] = useState(null);
+  const [eligibilityData, setEligibilityData] = useState(null);
+  const [marksData, setMarksData] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [showMarkForm, setShowMarkForm] = useState(false);
+  const [editingMark, setEditingMark] = useState(null);
+  const [stats, setStats] = useState(null);
 
   // Form states
-  const [showLessonForm, setShowLessonForm] = useState(false);
-  const [showMarkForm, setShowMarkForm] = useState(false);
-  const [editingLesson, setEditingLesson] = useState(null);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-
-  const [lessonForm, setLessonForm] = useState({
-    lesson_name: '',
-    lesson_type: 'assignment',
-    weightage: '',
-    max_marks: '100',
-    description: '',
-    due_date: '',
-    class_id: ''
-  });
-
   const [markForm, setMarkForm] = useState({
     admission_number: '',
+    course_id: '',
+    class_id: '',
     marks_obtained: '',
-    grade: '',
-    remarks: ''
+    total_marks: '',
+    grade: ''
   });
 
   useEffect(() => {
@@ -46,21 +33,40 @@ const LessonBasedExamManagement = () => {
   useEffect(() => {
     if (selectedCourse) {
       fetchClasses();
-      fetchLessons();
-      if (activeTab === 'grades') {
-        fetchFinalGrades();
-        fetchStatistics();
+      // Auto-load data when course is selected
+      if (activeTab === 'eligibility') {
+        fetchEligibilityAndMarks();
+      } else if (activeTab === 'marks') {
+        fetchMarksAndStats();
+      }
+    } else {
+      setClasses([]);
+      setEligibilityData(null);
+      setMarksData([]);
+      setStats(null);
+    }
+  }, [selectedCourse]);
+
+  // New effect to handle class changes
+  useEffect(() => {
+    if (selectedCourse) {
+      if (activeTab === 'eligibility') {
+        fetchEligibilityAndMarks();
+      } else if (activeTab === 'marks') {
+        fetchMarksAndStats();
       }
     }
-  }, [selectedCourse, selectedClass]);
+  }, [selectedClass]);
 
   const fetchCourses = async () => {
     try {
       setInitialLoading(true);
       const response = await axios.get('http://localhost:5000/api/courses');
-      setCourses(response.data?.courses || response.data || []);
+      const coursesData = response.data?.courses || response.data || [];
+      setCourses(coursesData);
     } catch (error) {
       console.error('Error fetching courses:', error);
+      setCourses([]);
     } finally {
       setInitialLoading(false);
     }
@@ -77,217 +83,242 @@ const LessonBasedExamManagement = () => {
     }
   };
 
-  const fetchLessons = async () => {
+  // Update the fetchEligibility function
+  const fetchEligibility = async () => {
     if (!selectedCourse) return;
     setLoading(true);
     try {
-      const params = selectedClass ? `?classId=${selectedClass}` : '';
-      const response = await axios.get(`http://localhost:5000/api/marks/courses/${selectedCourse}/lessons${params}`);
-      setLessons(response.data.lessons || []);
+      const params = new URLSearchParams();
+      if (selectedClass) {
+        params.append('classId', selectedClass);
+      }
+      
+      const response = await axios.get(
+        `http://localhost:5000/api/eligibility/course/${selectedCourse}?${params}`
+      );
+      
+      // Map the response to include class names
+      if (response.data.students) {
+        response.data.students = response.data.students.map(student => ({
+          ...student,
+          class: classes.find(c => c.class_id === student.class_id)?.class_name || 'N/A'
+        }));
+      }
+      
+      setEligibilityData(response.data);
     } catch (error) {
-      console.error('Error fetching lessons:', error);
-      setLessons([]);
+      console.error('Error fetching eligibility:', error);
+      setEligibilityData(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchLessonStudents = async (lessonId) => {
-    if (!lessonId) return;
+  const fetchMarks = async () => {
+    if (!selectedCourse) return;
+    try {
+      const params = selectedClass ? `?classId=${selectedClass}` : '';
+      const response = await axios.get(`http://localhost:5000/api/marks/course/${selectedCourse}${params}`);
+      setMarksData(response.data?.marks || []);
+    } catch (error) {
+      console.error('Error fetching marks:', error);
+      setMarksData([]);
+    }
+  };
+
+  const fetchStats = async () => {
+    if (!selectedCourse) return;
+    try {
+      const params = selectedClass ? `?classId=${selectedClass}` : '';
+      const response = await axios.get(`http://localhost:5000/api/marks/stats/course/${selectedCourse}${params}`);
+      setStats(response.data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      setStats(null);
+    }
+  };
+
+  // Combined functions to fetch both eligibility and marks data
+  const fetchEligibilityAndMarks = async () => {
+    if (!selectedCourse) return;
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/marks/lessons/${lessonId}/students`);
-      setLessonStudents(response.data.students || []);
+      // Fetch both eligibility and marks data
+      await Promise.all([
+        fetchEligibility(),
+        fetchMarks()
+      ]);
     } catch (error) {
-      console.error('Error fetching lesson students:', error);
-      setLessonStudents([]);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchFinalGrades = async () => {
+  const fetchMarksAndStats = async () => {
     if (!selectedCourse) return;
     setLoading(true);
     try {
-      const params = selectedClass ? `?classId=${selectedClass}` : '';
-      const response = await axios.get(`http://localhost:5000/api/marks/courses/${selectedCourse}/final-grades${params}`);
-      setFinalGrades(response.data.grades || []);
+      await Promise.all([
+        fetchMarks(),
+        fetchStats()
+      ]);
     } catch (error) {
-      console.error('Error fetching final grades:', error);
-      setFinalGrades([]);
+      console.error('Error fetching marks data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStatistics = async () => {
-    if (!selectedCourse) return;
-    try {
-      const params = selectedClass ? `?classId=${selectedClass}` : '';
-      const response = await axios.get(`http://localhost:5000/api/marks/courses/${selectedCourse}/statistics${params}`);
-      setStatistics(response.data);
-    } catch (error) {
-      console.error('Error fetching statistics:', error);
-      setStatistics(null);
-    }
+  // Check if student already has marks
+  const getStudentMark = (admissionNumber) => {
+    return marksData.find(mark => mark.admission_number === admissionNumber);
   };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSelectedLesson(null);
-    setLessonStudents([]);
-    
-    if (tab === 'grades' && selectedCourse) {
-      fetchFinalGrades();
-      fetchStatistics();
+    if (tab === 'eligibility' && selectedCourse) {
+      fetchEligibilityAndMarks();
+    } else if (tab === 'marks' && selectedCourse) {
+      fetchMarksAndStats();
     }
   };
 
-  const handleLessonSelect = (lesson) => {
-    setSelectedLesson(lesson);
-    fetchLessonStudents(lesson.lesson_id);
+  const handleCourseChange = (courseId) => {
+    setSelectedCourse(courseId);
+    setSelectedClass('');
+    // Data will be fetched automatically by useEffect
   };
 
-  const handleAddLesson = () => {
-    setLessonForm({
-      lesson_name: '',
-      lesson_type: 'assignment',
-      weightage: '',
-      max_marks: '100',
-      description: '',
-      due_date: '',
-      class_id: selectedClass || ''
-    });
-    setEditingLesson(null);
-    setShowLessonForm(true);
+  const handleClassChange = (classId) => {
+    setSelectedClass(classId);
+    // Data will be fetched automatically by useEffect
   };
 
-  const handleEditLesson = (lesson) => {
-    setLessonForm({
-      lesson_name: lesson.lesson_name,
-      lesson_type: lesson.lesson_type,
-      weightage: lesson.weightage,
-      max_marks: lesson.max_marks,
-      description: lesson.description || '',
-      due_date: lesson.due_date ? lesson.due_date.split('T')[0] : '',
-      class_id: lesson.class_id || ''
-    });
-    setEditingLesson(lesson);
-    setShowLessonForm(true);
-  };
-
-  const handleLessonSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const endpoint = editingLesson 
-        ? `/api/marks/lessons/${editingLesson.lesson_id}`
-        : `/api/marks/courses/${selectedCourse}/lessons`;
+  const handleAddMark = (student = null) => {
+    if (student) {
+      // Check if student already has marks
+      const existingMark = getStudentMark(student.admission_number);
       
-      const method = editingLesson ? 'put' : 'post';
-      
-      await axios[method](`http://localhost:5000${endpoint}`, lessonForm);
-      
-      alert(editingLesson ? 'Lesson updated successfully!' : 'Lesson created successfully!');
-      setShowLessonForm(false);
-      fetchLessons();
-    } catch (error) {
-      console.error('Error saving lesson:', error);
-      alert(error.response?.data?.message || 'Error saving lesson');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteLesson = async (lesson) => {
-    if (!window.confirm('Are you sure you want to delete this lesson? This action cannot be undone.')) return;
-
-    try {
-      await axios.delete(`http://localhost:5000/api/marks/lessons/${lesson.lesson_id}`);
-      alert('Lesson deleted successfully!');
-      fetchLessons();
-      if (selectedLesson && selectedLesson.lesson_id === lesson.lesson_id) {
-        setSelectedLesson(null);
-        setLessonStudents([]);
+      if (existingMark) {
+        // If marks exist, pre-fill the form for editing
+        setMarkForm({
+          admission_number: student.admission_number,
+          course_id: selectedCourse,
+          class_id: selectedClass || '',
+          marks_obtained: existingMark.marks_obtained || '',
+          total_marks: existingMark.total_marks || '100',
+          grade: existingMark.grade || ''
+        });
+        setEditingMark(existingMark);
+      } else {
+        // New marks entry
+        setMarkForm({
+          admission_number: student.admission_number,
+          course_id: selectedCourse,
+          class_id: selectedClass || '',
+          marks_obtained: '',
+          total_marks: '100',
+          grade: ''
+        });
+        setEditingMark(null);
       }
-    } catch (error) {
-      console.error('Error deleting lesson:', error);
-      alert(error.response?.data?.message || 'Error deleting lesson');
+    } else {
+      setMarkForm({
+        admission_number: '',
+        course_id: selectedCourse,
+        class_id: selectedClass || '',
+        marks_obtained: '',
+        total_marks: '100',
+        grade: ''
+      });
+      setEditingMark(null);
     }
+    setShowMarkForm(true);
   };
 
-  const handleAddMark = (student) => {
-    setSelectedStudent(student);
+  const handleEditMark = (mark) => {
     setMarkForm({
-      admission_number: student.admission_number,
-      marks_obtained: student.marks_obtained || '',
-      grade: student.grade || '',
-      remarks: student.remarks || ''
+      admission_number: mark.admission_number,
+      course_id: mark.course_id,
+      class_id: mark.class_id || '',
+      marks_obtained: mark.marks_obtained,
+      total_marks: mark.total_marks,
+      grade: mark.grade
     });
+    setEditingMark(mark);
     setShowMarkForm(true);
   };
 
   const handleMarkSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedLesson) return;
-
     setLoading(true);
+
     try {
-      await axios.post(`http://localhost:5000/api/marks/lessons/${selectedLesson.lesson_id}/marks`, markForm);
-      alert('Marks saved successfully!');
-      setShowMarkForm(false);
-      fetchLessonStudents(selectedLesson.lesson_id);
+      const encodedAdmission = encodeURIComponent((markForm.admission_number || '').trim());
+      const endpoint = `/api/marks/students/${encodedAdmission}/marks`;
+      const payload = {
+        course_id: markForm.course_id,
+        class_id: markForm.class_id,
+        marks_obtained: markForm.marks_obtained,
+        total_marks: markForm.total_marks,
+        grade: markForm.grade
+      };
       
-      // Refresh final grades if on grades tab
-      if (activeTab === 'grades') {
-        fetchFinalGrades();
-        fetchStatistics();
+      console.log('Making request to:', `http://localhost:5000${endpoint}`);
+      console.log('Payload:', payload);
+      console.log('Is editing:', !!editingMark);
+      
+      if (editingMark) {
+        // Update existing marks
+        await axios.put(`http://localhost:5000${endpoint}`, payload);
+        alert('Marks updated successfully!');
+      } else {
+        // Add new marks
+        await axios.post(`http://localhost:5000${endpoint}`, payload);
+        alert('Marks added successfully!');
+      }
+      
+      setShowMarkForm(false);
+      
+      // Refresh data based on active tab
+      if (activeTab === 'eligibility') {
+        await fetchMarks(); // Only refresh marks for eligibility tab
+      } else {
+        await fetchMarksAndStats(); // Refresh marks and stats for marks tab
       }
     } catch (error) {
       console.error('Error saving marks:', error);
-      alert(error.response?.data?.message || 'Error saving marks');
+      alert(error.response?.data?.message || error.response?.data?.error || 'Error saving marks');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteMark = async (student) => {
+  const handleDeleteMark = async (mark) => {
     if (!window.confirm('Are you sure you want to delete this mark?')) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/marks/lessons/${selectedLesson.lesson_id}/marks/${student.admission_number}`);
-      alert('Mark deleted successfully!');
-      fetchLessonStudents(selectedLesson.lesson_id);
+      const encodedAdmission = encodeURIComponent((mark.admission_number || '').trim());
+      const endpoint = `/api/marks/students/${encodedAdmission}/marks`;
       
-      if (activeTab === 'grades') {
-        fetchFinalGrades();
-        fetchStatistics();
+      await axios.delete(`http://localhost:5000${endpoint}`, {
+        data: {
+          course_id: mark.course_id,
+          class_id: mark.class_id
+        }
+      });
+      alert('Mark deleted successfully!');
+      
+      // Refresh data based on active tab
+      if (activeTab === 'eligibility') {
+        await fetchMarks(); // Only refresh marks for eligibility tab
+      } else {
+        await fetchMarksAndStats(); // Refresh marks and stats for marks tab
       }
     } catch (error) {
       console.error('Error deleting mark:', error);
       alert('Error deleting mark');
-    }
-  };
-
-  const handleRecalculateGrades = async () => {
-    if (!selectedCourse) return;
-    
-    if (!window.confirm('This will recalculate all final grades for this course. Continue?')) return;
-
-    setLoading(true);
-    try {
-      const params = selectedClass ? `?classId=${selectedClass}` : '';
-      await axios.post(`http://localhost:5000/api/marks/courses/${selectedCourse}/recalculate-grades${params}`);
-      alert('Grades recalculated successfully!');
-      fetchFinalGrades();
-      fetchStatistics();
-    } catch (error) {
-      console.error('Error recalculating grades:', error);
-      alert('Error recalculating grades');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -309,12 +340,6 @@ const LessonBasedExamManagement = () => {
     return colors[grade] || 'text-gray-600 bg-gray-100';
   };
 
-  const getWeightageColor = (totalWeightage) => {
-    if (totalWeightage === 100) return 'text-green-600';
-    if (totalWeightage > 100) return 'text-red-600';
-    return 'text-yellow-600';
-  };
-
   if (initialLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -322,8 +347,6 @@ const LessonBasedExamManagement = () => {
       </div>
     );
   }
-
-  const totalWeightage = lessons.reduce((sum, lesson) => sum + parseFloat(lesson.weightage || 0), 0);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -336,7 +359,7 @@ const LessonBasedExamManagement = () => {
             Back to Dashboard
           </Link>
           <h1 className="absolute left-1/2 transform -translate-x-1/2 text-3xl font-bold text-firebrick">
-            Lesson-based Grading System
+            Exam Management
           </h1>
         </div>
 
@@ -347,7 +370,7 @@ const LessonBasedExamManagement = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
               <select
                 value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
+                onChange={(e) => handleCourseChange(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select a course</option>
@@ -362,7 +385,7 @@ const LessonBasedExamManagement = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Class (Optional)</label>
               <select
                 value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
+                onChange={(e) => handleClassChange(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Classes</option>
@@ -376,334 +399,84 @@ const LessonBasedExamManagement = () => {
           </div>
         </div>
 
-        {selectedCourse && (
-          <>
-            {/* Tab Navigation */}
-            <div className="bg-white rounded-lg shadow mb-6">
-              <div className="border-b border-gray-200">
-                <nav className="flex space-x-8 px-6">
-                  <button
-                    onClick={() => handleTabChange('lessons')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'lessons'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Lesson Management
-                  </button>
-                  <button
-                    onClick={() => handleTabChange('grades')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'grades'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Final Grades & Statistics
-                  </button>
-                </nav>
-              </div>
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              <button
+                onClick={() => handleTabChange('eligibility')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'eligibility'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Exam Eligibility (80% Attendance)
+              </button>
+              <button
+                onClick={() => handleTabChange('marks')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'marks'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Marks Management
+              </button>
+            </nav>
+          </div>
 
-              <div className="p-6">
-                {loading && (
-                  <div className="flex justify-center items-center py-8">
-                    <div className="text-lg text-gray-600">Loading...</div>
-                  </div>
-                )}
-
-                {/* Lessons Tab */}
-                {/* Lessons Tab */}
-{activeTab === 'lessons' && !loading && (
-  <div className="flex flex-col lg:flex-row gap-6">
-    {/* Lessons List */}
-    <div className="lg:w-[35%]">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-xl font-semibold">Lessons & Assessments</h2>
-          <p className={`text-sm ${getWeightageColor(totalWeightage)}`}>
-            Total Weightage: {totalWeightage.toFixed(1)}%
-            {totalWeightage !== 100 && (
-              <span className="ml-2">
-                ({totalWeightage > 100 ? 'Exceeds' : 'Under'} 100%)
-              </span>
+          <div className="p-6">
+            {!selectedCourse && (
+              <p className="text-gray-500 text-center py-8">Please select a course to continue</p>
             )}
-          </p>
-        </div>
-        <button
-          onClick={handleAddLesson}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-        >
-          Add Lesson
-        </button>
-      </div>
 
-      <div className="space-y-3">
-        {lessons.map(lesson => (
-          <div
-            key={lesson.lesson_id}
-            className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-              selectedLesson?.lesson_id === lesson.lesson_id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-            onClick={() => handleLessonSelect(lesson)}
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-900">{lesson.lesson_name}</h3>
-                <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
-                  <span className="capitalize">{lesson.lesson_type}</span>
-                  <span>{lesson.weightage}% weight</span>
-                  <span>{lesson.max_marks} marks</span>
-                  {lesson.due_date && (
-                    <span>Due: {new Date(lesson.due_date).toLocaleDateString()}</span>
-                  )}
-                </div>
-                <div className="mt-2 text-sm text-blue-600">
-                  {lesson.marked_students}/{lesson.total_students} students marked
-                </div>
+            {/* Loading indicator */}
+            {selectedCourse && loading && (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-lg text-gray-600">Loading...</div>
               </div>
-              <div className="flex space-x-2 ml-4">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditLesson(lesson);
-                  }}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteLesson(lesson);
-                  }}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-        {lessons.length === 0 && (
-          <p className="text-gray-500 text-center py-8">No lessons created yet</p>
-        )}
-      </div>
-    </div>
-
-    {/* Student Marks for Selected Lesson */}
-    <div className="lg:w-[65%]">
-      {selectedLesson ? (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">{selectedLesson.lesson_name}</h3>
-              <p className="text-sm text-gray-500">
-                {selectedLesson.lesson_type} • {selectedLesson.weightage}% • Max: {selectedLesson.max_marks} marks
-              </p>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {lessonStudents.map(student => (
-                  <tr key={student.admission_number}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{student.student_name}</div>
-                        <div className="text-sm text-gray-500">{student.admission_number}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.marks_obtained !== null ? (
-                        <div>
-                          <span>{student.marks_obtained}/{selectedLesson.max_marks}</span>
-                          <div className="text-xs text-gray-400">
-                            {((student.marks_obtained / selectedLesson.max_marks) * 100).toFixed(1)}%
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 italic">Not marked</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {student.grade ? (
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getGradeColor(student.grade)}`}>
-                          {student.grade}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleAddMark(student)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          {student.marks_obtained !== null ? 'Edit' : 'Add'} Marks
-                        </button>
-                        {student.marks_obtained !== null && (
-                          <button
-                            onClick={() => handleDeleteMark(student)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {lessonStudents.length === 0 && (
-              <p className="text-gray-500 text-center py-8">No students found for this lesson</p>
             )}
-          </div>
-        </div>
-      ) : (
-        <div className="text-center text-gray-500 py-8">
-          <p>Select a lesson to view and manage student marks</p>
-        </div>
-      )}
-    </div>
-  </div>
-)}
 
+            {/* Eligibility Tab */}
+            {activeTab === 'eligibility' && selectedCourse && !loading && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Exam Eligibility Check</h2>
+                  <button
+                    onClick={fetchEligibilityAndMarks}
+                    disabled={loading}
+                    className="bg-firebrick text-white px-4 py-2 rounded-md hover:bg-darkRed disabled:opacity-50"
+                  >
+                    {loading ? 'Loading...' : 'Refresh'}
+                  </button>
+                </div>
 
-                {/* Grades Tab */}
-                {activeTab === 'grades' && !loading && (
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-xl font-semibold">Final Grades & Course Statistics</h2>
-                      <button
-                        onClick={handleRecalculateGrades}
-                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                      >
-                        Recalculate All Grades
-                      </button>
+                {eligibilityData && (
+                  <>
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="font-medium text-blue-900">Total Students</h3>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {eligibilityData.summary?.total_students || 0}
+                        </p>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="font-medium text-green-900">Eligible</h3>
+                        <p className="text-2xl font-bold text-green-600">
+                          {eligibilityData.summary?.eligible_students || 0}
+                        </p>
+                      </div>
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <h3 className="font-medium text-red-900">Not Eligible</h3>
+                        <p className="text-2xl font-bold text-red-600">
+                          {eligibilityData.summary?.not_eligible_students || 0}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Statistics */}
-                    {statistics && statistics.overall_stats && (
-                      <div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                          <div className="bg-blue-50 p-4 rounded-lg">
-                            <h3 className="font-medium text-blue-900">Total Students</h3>
-                            <p className="text-2xl font-bold text-blue-600">
-                              {statistics.overall_stats.total_students || 0}
-                            </p>
-                          </div>
-                          <div className="bg-green-50 p-4 rounded-lg">
-                            <h3 className="font-medium text-green-900">Class Average</h3>
-                            <p className="text-2xl font-bold text-green-600">
-                              {statistics.overall_stats.overall_avg?.toFixed(1) || 0}%
-                            </p>
-                          </div>
-                          <div className="bg-purple-50 p-4 rounded-lg">
-                            <h3 className="font-medium text-purple-900">Average GPA</h3>
-                            <p className="text-2xl font-bold text-purple-600">
-                              {statistics.overall_stats.avg_gpa?.toFixed(2) || 0}
-                            </p>
-                          </div>
-                          <div className="bg-yellow-50 p-4 rounded-lg">
-                            <h3 className="font-medium text-yellow-900">Pass Rate</h3>
-                            <p className="text-2xl font-bold text-yellow-600">
-                              {statistics.overall_stats.pass_rate?.toFixed(1) || 0}%
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Grade Distribution */}
-                        {statistics.grade_distribution && statistics.grade_distribution.length > 0 && (
-                          <div className="mb-6">
-                            <h3 className="text-lg font-medium mb-3">Grade Distribution</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                              {statistics.grade_distribution.map(grade => (
-                                <div key={grade.final_grade} className={`p-3 rounded-lg ${getGradeColor(grade.final_grade)}`}>
-                                  <div className="text-center">
-                                    <div className="text-lg font-bold">{grade.final_grade}</div>
-                                    <div className="text-sm">{grade.count} students</div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Lesson Statistics */}
-                        {statistics.lesson_statistics && statistics.lesson_statistics.length > 0 && (
-                          <div className="mb-6">
-                            <h3 className="text-lg font-medium mb-3">Lesson Performance</h3>
-                            <div className="overflow-x-auto">
-                              <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                  <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Lesson
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Type
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Weight
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Submissions
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Average
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Pass Rate
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                  {statistics.lesson_statistics.map(lesson => (
-                                    <tr key={lesson.lesson_id}>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {lesson.lesson_name}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                                        {lesson.lesson_type}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {lesson.weightage}%
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {lesson.submissions || 0}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {lesson.avg_percentage ? lesson.avg_percentage.toFixed(1) : 0}%
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {lesson.submissions ? 
-                                          ((lesson.passed_submissions / lesson.submissions) * 100).toFixed(1) : 0}%
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Final Grades Table */}
+                    {/* Students Table */}
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
@@ -715,204 +488,250 @@ const LessonBasedExamManagement = () => {
                               Admission No.
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Progress
+                              Class
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Final %
+                              Attendance
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Grade
+                              Status
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              GPA Points
+                              Current Marks
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
                             </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {finalGrades.map(grade => (
-                            <tr key={grade.grade_id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {grade.student_name}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {grade.admission_number}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <div className="flex items-center">
-                                  <div className="flex-1 mr-2">
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                      <div
-                                        className="bg-blue-500 h-2 rounded-full"
-                                        style={{ width: `${Math.min(grade.completion_percentage || 0, 100)}%` }}
-                                      ></div>
+                          {eligibilityData.students && eligibilityData.students.map(student => {
+                            const existingMark = getStudentMark(student.admission_number);
+                            return (
+                              <tr key={student.id}>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                  {student.name}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {student.admission_number}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {student.class || 'N/A'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  <div className="flex items-center">
+                                    <div className="flex-1 mr-2">
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div
+                                          className={`h-2 rounded-full ${
+                                            student.attendance_percentage >= 80
+                                              ? 'bg-green-500'
+                                              : 'bg-red-500'
+                                          }`}
+                                          style={{ width: `${Math.min(student.attendance_percentage || 0, 100)}%` }}
+                                        ></div>
+                                      </div>
                                     </div>
+                                    <span className="text-xs">
+                                      {student.attendance_percentage || 0}% ({student.present_sessions || 0}/{student.total_sessions || 0})
+                                    </span>
                                   </div>
-                                  <span className="text-xs">
-                                    {grade.completed_lessons || 0}/{grade.total_lessons || 0}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                    student.exam_eligibility === 'eligible'
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {student.exam_eligibility === 'eligible' ? 'Eligible' : 'Not Eligible'}
                                   </span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {grade.final_percentage?.toFixed(1) || 0}%
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getGradeColor(grade.final_grade)}`}>
-                                  {grade.final_grade}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {grade.gpa_points?.toFixed(2) || 0}
-                              </td>
-                            </tr>
-                          ))}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {existingMark ? (
+                                    <div className="flex items-center space-x-2">
+                                      <span>{existingMark.marks_obtained}/{existingMark.total_marks}</span>
+                                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getGradeColor(existingMark.grade)}`}>
+                                        {existingMark.grade}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400 italic">Not marked</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {student.exam_eligibility === 'eligible' && (
+                                    <button
+                                      onClick={() => handleAddMark(student)}
+                                      className={`text-blue-600 hover:text-blue-900 ${
+                                        existingMark ? 'font-medium' : ''
+                                      }`}
+                                    >
+                                      {existingMark ? 'Update Marks' : 'Add Marks'}
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
-                      {finalGrades.length === 0 && (
-                        <p className="text-gray-500 text-center py-8">No final grades calculated yet</p>
+                      {(!eligibilityData.students || eligibilityData.students.length === 0) && (
+                        <p className="text-gray-500 text-center py-8">No students found for this course</p>
                       )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Marks Tab */}
+            {activeTab === 'marks' && selectedCourse && !loading && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Marks Management</h2>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={fetchMarksAndStats}
+                      disabled={loading}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      {loading ? 'Loading...' : 'Refresh'}
+                    </button>
+                    <button
+                      onClick={() => handleAddMark()}
+                      className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                    >
+                      Add Marks
+                    </button>
+                  </div>
+                </div>
+
+                {/* Statistics */}
+                {stats && stats.overall_stats && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-medium text-blue-900">Total Students</h3>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {stats.overall_stats.total_students || 0}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h3 className="font-medium text-green-900">Average</h3>
+                      <p className="text-2xl font-bold text-green-600">
+                        {stats.overall_stats.overall_avg?.toFixed(1) || 0}%
+                      </p>
+                    </div>
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <h3 className="font-medium text-yellow-900">Highest</h3>
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {stats.overall_stats.overall_max || 0}%
+                      </p>
+                    </div>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <h3 className="font-medium text-red-900">Lowest</h3>
+                      <p className="text-2xl font-bold text-red-600">
+                        {stats.overall_stats.overall_min || 0}%
+                      </p>
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          </>
-        )}
 
-        {/* Lesson Form Modal */}
-        {showLessonForm && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {editingLesson ? 'Edit Lesson' : 'Add New Lesson'}
-                </h3>
-                <form onSubmit={handleLessonSubmit}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Lesson Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={lessonForm.lesson_name}
-                      onChange={(e) => setLessonForm({...lessonForm, lesson_name: e.target.value})}
-                      required
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Lesson Type
-                    </label>
-                    <select
-                      value={lessonForm.lesson_type}
-                      onChange={(e) => setLessonForm({...lessonForm, lesson_type: e.target.value})}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="assignment">Assignment</option>
-                      <option value="quiz">Quiz</option>
-                      <option value="midterm">Midterm Exam</option>
-                      <option value="final">Final Exam</option>
-                      <option value="project">Project</option>
-                      <option value="presentation">Presentation</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Weightage (%) *
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={lessonForm.weightage}
-                        onChange={(e) => setLessonForm({...lessonForm, weightage: e.target.value})}
-                        required
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Max Marks *
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={lessonForm.max_marks}
-                        onChange={(e) => setLessonForm({...lessonForm, max_marks: e.target.value})}
-                        required
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Class (Optional)
-                    </label>
-                    <select
-                      value={lessonForm.class_id}
-                      onChange={(e) => setLessonForm({...lessonForm, class_id: e.target.value})}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">All Classes</option>
-                      {classes.map(cls => (
-                        <option key={cls.class_id} value={cls.class_id}>
-                          Class {cls.class}
-                        </option>
+                {/* Grade Distribution */}
+                {stats && stats.grade_distribution && stats.grade_distribution.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-3">Grade Distribution</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+                      {stats.grade_distribution.map(grade => (
+                        <div key={grade.grade} className={`p-3 rounded-lg ${getGradeColor(grade.grade)}`}>
+                          <div className="text-center">
+                            <div className="text-lg font-bold">{grade.grade}</div>
+                            <div className="text-sm">{grade.count} students</div>
+                          </div>
+                        </div>
                       ))}
-                    </select>
+                    </div>
                   </div>
+                )}
 
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Due Date (Optional)
-                    </label>
-                    <input
-                      type="date"
-                      value={lessonForm.due_date}
-                      onChange={(e) => setLessonForm({...lessonForm, due_date: e.target.value})}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description (Optional)
-                    </label>
-                    <textarea
-                      value={lessonForm.description}
-                      onChange={(e) => setLessonForm({...lessonForm, description: e.target.value})}
-                      rows="3"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowLessonForm(false)}
-                      className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
-                    >
-                      {loading ? 'Saving...' : (editingLesson ? 'Update' : 'Create')}
-                    </button>
-                  </div>
-                </form>
+                {/* Marks Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Admission No.
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Class
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Marks
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Percentage
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Grade
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {marksData && marksData.map(mark => (
+                        <tr key={mark.mark_id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {mark.student_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {mark.admission_number}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {mark.class_name || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {mark.marks_obtained}/{mark.total_marks}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {mark.percentage}%
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getGradeColor(mark.grade)}`}>
+                              {mark.grade}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleEditMark(mark)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMark(mark)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {(!marksData || marksData.length === 0) && (
+                    <p className="text-gray-500 text-center py-8">No marks recorded yet</p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Mark Form Modal */}
         {showMarkForm && (
@@ -920,25 +739,49 @@ const LessonBasedExamManagement = () => {
             <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Add/Edit Marks - {selectedStudent?.student_name}
+                  {editingMark ? 'Update Marks' : 'Add Marks'}
                 </h3>
                 <form onSubmit={handleMarkSubmit}>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Marks Obtained (Max: {selectedLesson?.max_marks}) *
+                      Admission Number
+                    </label>
+                    <input
+                      type="text"
+                      value={markForm.admission_number}
+                      onChange={(e) => setMarkForm({...markForm, admission_number: e.target.value})}
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={!!editingMark} // Disable when editing
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Marks Obtained
                     </label>
                     <input
                       type="number"
                       min="0"
-                      max={selectedLesson?.max_marks || 100}
-                      step="0.1"
+                      max={markForm.total_marks}
                       value={markForm.marks_obtained}
                       onChange={(e) => setMarkForm({...markForm, marks_obtained: e.target.value})}
                       required
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total Marks
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={markForm.total_marks}
+                      onChange={(e) => setMarkForm({...markForm, total_marks: e.target.value})}
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Grade (Optional - will be calculated automatically)
@@ -963,19 +806,6 @@ const LessonBasedExamManagement = () => {
                       <option value="F">F</option>
                     </select>
                   </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Remarks (Optional)
-                    </label>
-                    <textarea
-                      value={markForm.remarks}
-                      onChange={(e) => setMarkForm({...markForm, remarks: e.target.value})}
-                      rows="3"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
                   <div className="flex justify-end space-x-2">
                     <button
                       type="button"
@@ -989,7 +819,7 @@ const LessonBasedExamManagement = () => {
                       disabled={loading}
                       className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
                     >
-                      {loading ? 'Saving...' : 'Save Marks'}
+                      {loading ? 'Saving...' : (editingMark ? 'Update' : 'Save')}
                     </button>
                   </div>
                 </form>
@@ -1002,4 +832,4 @@ const LessonBasedExamManagement = () => {
   );
 };
 
-export default LessonBasedExamManagement;
+export default ExamManagement;

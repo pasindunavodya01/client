@@ -1,28 +1,63 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { FaRobot, FaTimes } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from "react";
+import { complex, motion } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase";
+
+// Import all required icons from react-icons
+import {
+  FaGraduationCap,
+  FaCertificate,
+  FaChalkboardTeacher,
+  FaTrophy,
+  FaAward,
+  FaUsers,
+  FaHandshake,
+  FaBook,
+  FaClock,
+  FaRocket,
+  FaUserGraduate,
+  FaClipboardList,
+  FaChartLine,
+  FaFileAlt,
+  FaCalendarAlt,
+  FaLaptopCode,
+  FaCheckCircle,
+  FaStar,
+  FaFacebookF,
+  FaInstagram,
+  FaLinkedinIn,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope,
+  FaSignInAlt,
+  FaRobot,
+  FaTimes
+} from "react-icons/fa";
 
 const PublicHomePage = () => {
-  const [courses, setCourses] = useState([]);
-  const [lecturers, setLecturers] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const coursesRes = await axios.get('http://localhost:5000/api/courses');
-        setCourses(coursesRes.data);
-
-        try {
-          const lecturersRes = await axios.get('http://localhost:5000/api/lecturers');
-          setLecturers(lecturersRes.data);
-        } catch {
-          setLecturers([]);
-        }
+        const res = await fetch("http://localhost:5000/api/chatbot/data");
+        const jsonData = await res.json();
+        setData(jsonData);
       } catch (err) {
-        console.error('Failed to fetch data:', err);
+        console.error("Failed to fetch data:", err);
+        setData({
+          greeting: "Hello! Welcome to ITDLH",
+          courses: [],
+          lecturers: [],
+          facilities: [],
+          contact: {
+            email: "info@moha.gov.lk",
+            phone: "+94 112 785 141",
+            address: "ITDLH, Dalupotha, Negombo, Sri Lanka"
+          }
+        });
       } finally {
         setLoading(false);
       }
@@ -30,218 +65,828 @@ const PublicHomePage = () => {
     fetchData();
   }, []);
 
-  if (loading)
-    return <div className="text-center py-40 text-xl font-semibold">Loading...</div>;
-
-  const features = [
-    { title: 'Experienced Instructors', desc: 'Learn from industry-certified professionals with real-world experience.' },
-    { title: 'Comprehensive Courses', desc: 'From beginners to professionals: Web Dev, Graphic Design, Programming & more.' },
-    { title: 'Flexible Learning Options', desc: 'Adapt your education with flexible schedules and online options.' },
-    { title: 'State-of-the-Art Facilities', desc: 'Equipped with latest technology for optimal learning.' },
-    { title: 'Analytical Support', desc: 'Advanced IT analytics, system optimization, software testing & compliance.' },
-    { title: 'Consultation', desc: 'Expert ICT guidance to tackle challenges and optimize networks.' }
+  const stats = [
+    { icon: FaGraduationCap, value: "1000+", label: "Students Enrolled" },
+    { icon: FaCertificate, value: data?.courses?.length || "8+", label: "Courses Offered" },
+    { icon: FaChalkboardTeacher, value: data?.lecturers?.length || "15+", label: "Expert Instructors" },
+    { icon: FaTrophy, value: "95%", label: "Success Rate" }
   ];
 
-  return (
-    <div className="font-sans text-gray-800 scroll-smooth scroll-pt-20 relative">
+  const testimonials = [
+    {
+      name: "Kasun Perera",
+      course: "Web Designing",
+      text: "The web design course transformed my career. The instructors were knowledgeable and supportive throughout.",
+      rating: 5
+    },
+    {
+      name: "Dilini Fernando",
+      course: "Python Programming",
+      text: "Excellent learning environment with hands-on projects. I'm now working as a junior developer!",
+      rating: 5
+    },
+    {
+      name: "Nuwan Silva",
+      course: "Office Applications",
+      text: "Practical course that helped me improve my productivity at work. Highly recommended!",
+      rating: 5
+    }
+  ];
 
+  const whyChoose = [
+    {
+      icon: FaAward,
+      title: "Government Institute",
+      desc: "All our certificates are officially recognized by the government"
+    },
+    {
+      icon: FaUsers,
+      title: "Small Class Sizes",
+      desc: "Personalized attention with limited students per batch"
+    },
+    {
+      icon: FaHandshake,
+      title: "Placement Support",
+      desc: "Career counseling and job placement assistance"
+    },
+    {
+      icon: FaBook,
+      title: "Updated Curriculum",
+      desc: "Industry-relevant content updated regularly"
+    },
+    {
+      icon: FaClock,
+      title: "Flexible Timings",
+      desc: "Weekend and evening batches available"
+    },
+    {
+      icon: FaRocket,
+      title: "Practical Training",
+      desc: "Hands-on projects and real-world applications"
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-orange-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-red-600 mx-auto mb-4"></div>
+          <p className="text-xl font-semibold text-gray-700">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="font-sans text-gray-800 scroll-smooth scroll-pt-20 relative overflow-x-hidden">
       {/* Navbar */}
-      <nav className="fixed w-full bg-white shadow z-50">
+      <nav className="fixed w-full bg-white/95 backdrop-blur-sm shadow-md z-50">
         <div className="max-w-7xl mx-auto flex justify-between items-center py-4 px-6">
-          <Link to="/" className="text-2xl font-bold text-firebrick flex items-center gap-2">
-            <img src="/images/icons/LOGO.svg" alt="Logo" className="w-10 h-10 object-contain" />
-            ITDLH - Negombo
-          </Link>
-          <div className="space-x-6 hidden md:flex">
-            <a href="#vision" className="hover:text-firebrick transition">Vision & Mission</a>
-            <a href="#features" className="hover:text-firebrick transition">Features</a>
-            <a href="#courses" className="hover:text-firebrick transition">Courses</a>
-            <a href="#lecturers" className="hover:text-firebrick transition">Lecturers</a>
-            <a href="#contact" className="hover:text-firebrick transition">Contact</a>
-            <Link to="/login" className="bg-firebrick text-white px-4 py-2 rounded shadow hover:bg-red-700 transition">Login</Link>
-          </div>
+          <motion.div 
+            className="text-2xl font-bold text-red-600 flex items-center gap-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+              <FaGraduationCap className="text-white" />
+            </div>
+            ITDLH Negombo
+          </motion.div>
+          <div className="space-x-6 hidden lg:flex items-center">
+  <a href="#home" className="hover:text-red-600 transition font-medium">Home</a>
+  <a href="#courses" className="hover:text-red-600 transition font-medium">Courses</a>
+  <a href="#lecturers" className="hover:text-red-600 transition font-medium">Lecturers</a>
+  <a href="#testimonials" className="hover:text-red-600 transition font-medium">Testimonials</a>
+  <a href="#contact" className="hover:text-red-600 transition font-medium">Contact</a>
+
+  
+
+  {/* Enroll Now as simple link */}
+  <button className="hover:text-red-600 transition font-medium">
+    Enroll Now
+  </button>
+  {/* Login as red button */}
+  <Link
+    to="/login"
+    className="bg-red-600 text-white px-6 py-2 rounded-full shadow-lg hover:bg-red-700 transition transform hover:scale-105"
+  >
+    Login
+  </Link>
+</div>
+ 
+
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <header className="relative h-screen bg-gradient-to-r from-red-600 via-firebrick to-red-800 text-white flex items-center px-6">
-        <div className="absolute inset-0 bg-gradient-to-r from-firebrick to-darkRed opacity-80 z-0"></div>
-
-        <motion.div
-          className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2 }}
-        >
-          {/* Left: Logo + Motto */}
-          <motion.div
-            className="flex flex-col items-center md:items-start text-center md:text-left flex-shrink-0"
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 1 }}
-          >
-            <img
-              src="/images/icons/LOGO.svg"
-              alt="LMS Logo"
-              className="w-40 h-40 md:w-48 md:h-48 rounded-lg bg-white border-2 border-gold shadow-lg object-contain"
-            />
-            <h2 className="mt-4 text-2xl md:text-3xl font-semibold text-white">Learn. Grow. Succeed.</h2>
-          </motion.div>
-
-          {/* Right: Text Content */}
-          <motion.div
-            className="md:ml-10 max-w-lg text-center md:text-left"
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 1 }}
-          >
-            <h1 className="text-3xl md:text-5xl font-bold leading-snug">
-              <span className="text-gold">Information Technology & Distance Learning Hub</span>  <span className="text-white">Negombo</span>
-            </h1>
-            <p className="mt-4 text-lg md:text-xl text-gray-100">
-              Bridging the gap between technology and education with quality IT courses, professional training, and experienced instructors.
-            </p>
-
-            <div className="mt-6 flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0 justify-center md:justify-start">
-              <a href="#courses" className="bg-white text-firebrick font-semibold px-6 py-3 rounded-lg shadow-lg hover:bg-gray-100 transition">View Courses</a>
-              <a href="#signup" className="bg-gold text-firebrick font-semibold px-6 py-3 rounded-lg shadow-lg hover:bg-yellow-400 transition">Sign Up Now</a>
-            </div>
-          </motion.div>
-        </motion.div>
-      </header>
-
-      <main className="max-w-7xl mx-auto p-8 mt-24 space-y-32">
-        {/* Vision & Mission */}
-        <motion.section
-          id="vision"
-          className="text-center px-6"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.8 }}
-        >
-          <h2 className="text-4xl font-bold text-firebrick mb-6">Vision & Mission</h2>
-          <p className="max-w-3xl mx-auto text-lg mb-4">
-            Our institute was established to bridge the gap between technology and education. We deliver quality IT courses, professional training, and advanced facilities to equip individuals with the skills to succeed in the modern digital world.
-          </p>
-        </motion.section>
-
-        {/* Features Section */}
-        <motion.section
-          id="features"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-        >
-          <h2 className="text-4xl font-bold text-firebrick text-center mb-12">Discover Our Exclusive Features</h2>
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
-          >
-            {features.map((feature, i) => (
-              <motion.div
-                key={i}
-                className="bg-white rounded-2xl shadow-lg p-6 hover:scale-105 transform transition-all duration-300"
-                variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.6 }}
-              >
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.section>
-
-        {/* Courses Section */}
-        <motion.section
-          id="courses"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-        >
-          <h2 className="text-4xl font-bold text-firebrick text-center mb-12">Our Courses</h2>
-          {courses.length === 0 ? (
-            <p className="text-center text-gray-600">No courses available.</p>
-          ) : (
+      {/* Hero Section - Enhanced */}
+      <section id="home" className="relative min-h-screen flex items-center overflow-hidden pt-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-600 via-red-700 to-orange-600"></div>
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-yellow-300 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              {courses.map(course => (
-                <motion.div
-                  key={course.course_id}
-                  className="bg-white rounded-2xl shadow-lg p-6 hover:scale-105 transform transition-all duration-300"
-                  variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                  transition={{ duration: 0.5 }}
+              <motion.div 
+                className="inline-block mb-4 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white font-semibold"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                🎓 Government Institute
+              </motion.div>
+              
+              <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight mb-6">
+                Transform Your Future with
+                <span className="block text-yellow-300 mt-2">Quality IT Education</span>
+              </h1>
+              
+              <p className="text-xl text-white/90 mb-8 leading-relaxed">
+                Join Sri Lanka's premier IT & Distance Learning Hub in Negombo. 
+                Gain practical skills, industry certifications, and career opportunities.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <motion.a
+                  href="#courses"
+                  className="bg-white text-red-600 px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl transition transform hover:scale-105 text-center"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <h3 className="text-2xl font-bold mb-2">{course.course_name}</h3>
-                  <div className="text-lg font-semibold text-green-600">
-                    Fee: Rs. {Number(course.amount).toLocaleString()}
+                  Explore Courses
+                </motion.a>
+                <motion.a
+                  href="#contact"
+                  className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-bold hover:bg-white hover:text-red-600 transition text-center"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Contact Us
+                </motion.a>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl">
+                <div className="grid grid-cols-2 gap-6">
+                  {stats.map((stat, idx) => (
+                    <motion.div
+                      key={idx}
+                      className="bg-white rounded-2xl p-6 text-center shadow-lg"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + idx * 0.1 }}
+                    >
+                      <stat.icon className="text-4xl text-red-600 mx-auto mb-3" />
+                      <div className="text-3xl font-bold text-gray-800">{stat.value}</div>
+                      <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <main className="bg-gradient-to-b from-gray-50 to-white">
+        {/* Student Management System Section */}
+        <section id="sms" className="py-20 px-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Student <span className="text-red-600">Management System</span>
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Access your courses, grades, attendance, and more through our comprehensive student portal
+              </p>
+            </motion.div>
+
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* SMS Features */}
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="space-y-6"
+              >
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <FaUserGraduate className="text-2xl text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">Course Management</h3>
+                      <p className="text-gray-600">View enrolled courses, schedules, and course materials in one place</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <FaClipboardList className="text-2xl text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">Attendance Tracking</h3>
+                      <p className="text-gray-600">Monitor your attendance records and receive notifications</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <FaChartLine className="text-2xl text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">Grade Reports</h3>
+                      <p className="text-gray-600">Access your grades, assignments, and academic progress reports</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <FaFileAlt className="text-2xl text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">Documents & Certificates</h3>
+                      <p className="text-gray-600">Download certificates, receipts, and official documents</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <FaCalendarAlt className="text-2xl text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">Event Calendar</h3>
+                      <p className="text-gray-600">Stay updated with exam schedules, holidays, and important dates</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Login Card */}
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+              >
+                <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12">
+                  <div className="text-center mb-8">
+                    <div className="w-20 h-20 bg-gradient-to-br from-red-600 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <FaUserGraduate className="text-4xl text-white" />
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-800 mb-2">SMS Login</h3>
+                    <p className="text-gray-600">Access your student portal</p>
+                  </div>
+
+                  <SMSLoginForm />
+                </div>
+              </motion.div>
+            </div>
+
+            {/* SMS Benefits Banner */}
+            <motion.div
+              className="mt-16 bg-gradient-to-r from-red-600 to-orange-600 rounded-3xl p-8 text-white text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                Manage Your Education Seamlessly
+              </h3>
+              <p className="text-lg text-white/90 max-w-3xl mx-auto mb-6">
+                Our Student Management System provides 24/7 access to all your academic information, 
+                making it easier to track your progress and stay organized.
+              </p>
+              <div className="grid md:grid-cols-4 gap-6 mt-8">
+                <div>
+                  <div className="text-3xl font-bold mb-1">24/7</div>
+                  <div className="text-white/80">Access Anytime</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold mb-1">100%</div>
+                  <div className="text-white/80">Secure & Private</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold mb-1">Real-time</div>
+                  <div className="text-white/80">Updates</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold mb-1">Mobile</div>
+                  <div className="text-white/80">Friendly</div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Why Choose Us */}
+        <section className="py-20 px-6">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Why Choose <span className="text-red-600">ITDLH?</span>
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                We provide world-class education with a focus on practical skills and career success
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {whyChoose.map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={{ y: -5 }}
+                >
+                  <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6">
+                    <item.icon className="text-3xl text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-3">{item.title}</h3>
+                  <p className="text-gray-600">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Courses Section - Enhanced */}
+        <section id="courses" className="py-20 px-6 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Our <span className="text-red-600">Popular Courses</span>
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Choose from our range of industry-focused courses designed to boost your career
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {(data?.courses || []).length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-xl text-gray-600">Courses will be announced soon.</p>
+                </div>
+              ) : (
+                (data?.courses || []).map((course, idx) => (
+                <motion.div
+                  key={idx}
+                  className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <div className="bg-gradient-to-br from-red-500 to-orange-500 p-6 group-hover:from-red-600 group-hover:to-orange-600 transition-all">
+                    <FaLaptopCode className="text-4xl text-white mb-3" />
+                    <h3 className="text-xl font-bold text-white">{course.name}</h3>
+                  </div>
+                  
+                  <div className="p-6">
+                    <p className="text-gray-600 mb-4">{course.description}</p>
+                    
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center text-gray-700">
+                        <FaClock className="text-red-600 mr-3" />
+                        <span className="font-semibold">Duration:</span>
+                        <span className="ml-2">{course.duration}</span>
+                      </div>
+                      <div className="flex items-center text-gray-700">
+                        <FaCheckCircle className="text-green-600 mr-3" />
+                        <span className="font-semibold">Eligibility:</span>
+                        <span className="ml-2 text-sm">{course.eligibility}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t pt-4 flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-gray-500">Course Fee</div>
+                        <div className="text-2xl font-bold text-red-600">
+                          Rs. {Number(course.price).toLocaleString()}
+                        </div>
+                      </div>
+                      <button className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition transform hover:scale-105">
+                        Enroll
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )))}
+            </div>
+          </div>
+        </section>
+
+        {/* Lecturers Section - Enhanced */}
+        <section id="lecturers" className="py-20 px-6">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Meet Our <span className="text-red-600">Expert Instructors</span>
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Learn from industry professionals with years of teaching and practical experience
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {(data?.lecturers || []).length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-xl text-gray-600">Lecturer information coming soon.</p>
+                </div>
+              ) : (
+                (data?.lecturers || []).map((lecturer, idx) => (
+                <motion.div
+                  key={idx}
+                  className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={lecturer.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(lecturer.name)}&background=E53E3E&color=fff&size=400`}
+                      alt={lecturer.name}
+                      className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div className="absolute bottom-4 left-4 text-white">
+                      <h3 className="text-2xl font-bold">{lecturer.name}</h3>
+                      <p className="text-red-300 font-semibold">{lecturer.course} Expert</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6">
+                    <p className="text-gray-600 mb-4">
+                      Experienced educator passionate about empowering students with practical skills
+                      and industry knowledge.
+                    </p>
+                    <div className="flex items-center text-red-600">
+                      <FaAward className="mr-2" />
+                      <span className="text-sm font-semibold">10+ Years Experience</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section id="testimonials" className="py-20 px-6 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Student <span className="text-red-600">Success Stories</span>
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Hear what our students have to say about their learning journey
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {testimonials.map((testimonial, idx) => (
+                <motion.div
+                  key={idx}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <div className="flex items-center mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <FaStar key={i} className="text-yellow-400 text-xl" />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 mb-6 italic">"{testimonial.text}"</p>
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-lg mr-4">
+                      {testimonial.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-800">{testimonial.name}</div>
+                      <div className="text-sm text-gray-500">{testimonial.course}</div>
+                    </div>
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
-          )}
-        </motion.section>
-
-        {/* Lecturers Section */}
-        <motion.section
-          id="lecturers"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.8 }}
-        >
-          <h2 className="text-4xl font-bold text-firebrick text-center mb-12">Meet Our Lecturers</h2>
-          {lecturers.length === 0 ? (
-            <p className="text-center text-gray-600">Lecturer information coming soon.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {lecturers.map(lecturer => (
-                <div key={lecturer.lecturer_id} className="bg-white rounded-2xl shadow-lg text-center p-6 hover:scale-105 transform transition-all duration-300">
-                  <img src={lecturer.image_url} alt={lecturer.name} className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-gray-200" />
-                  <h3 className="text-xl font-bold">{lecturer.name}</h3>
-                  <p className="text-md text-blue-600 font-semibold mb-2">{lecturer.title}</p>
-                  <p className="text-gray-600">{lecturer.bio}</p>
-                </div>
-              ))}
             </div>
-          )}
-        </motion.section>
+          </div>
+        </section>
+
+        {/* Facilities Section */}
+        <section className="py-20 px-6">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                World-Class <span className="text-red-600">Facilities</span>
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Study in a modern, comfortable environment equipped with the latest technology
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {(data?.facilities || []).length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-xl text-gray-600">Facilities information coming soon.</p>
+                </div>
+              ) : (
+                (data?.facilities || []).map((facility, idx) => (
+                <motion.div
+                  key={idx}
+                  className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all text-center"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FaCheckCircle className="text-3xl text-red-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-800">{facility}</h3>
+                </motion.div>
+              )))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 px-6 bg-gradient-to-br from-red-600 to-orange-600">
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Ready to Start Your Learning Journey?
+              </h2>
+              <p className="text-xl mb-8 text-white/90">
+                Join hundreds of students who have transformed their careers with ITDLH
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button className="bg-white text-red-600 px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl transition transform hover:scale-105">
+                  Enroll Now
+                </button>
+                <button className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-bold hover:bg-white hover:text-red-600 transition">
+                  Download Brochure
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
       <footer id="contact" className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div>
-            <h3 className="text-2xl font-bold mb-4">ITDLH - Negombo</h3>
-            <p>Distance learning center details, courses, lecturers, and guidance to enhance your career.</p>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                  <FaGraduationCap />
+                </div>
+                <h3 className="text-xl font-bold">ITDLH Negombo</h3>
+              </div>
+              <p className="text-gray-400 mb-4">
+                Empowering students with quality IT education and professional training.
+              </p>
+              <div className="flex gap-3">
+                <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition">
+                  <FaFacebookF />
+                </a>
+                <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition">
+                  <FaInstagram />
+                </a>
+                <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition">
+                  <FaLinkedinIn />
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold mb-4">Quick Links</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#home" className="hover:text-red-400 transition">Home</a></li>
+                <li><a href="#courses" className="hover:text-red-400 transition">Courses</a></li>
+                <li><a href="#lecturers" className="hover:text-red-400 transition">Lecturers</a></li>
+                <li><a href="#testimonials" className="hover:text-red-400 transition">Testimonials</a></li>
+                <li><Link to="/login" className="hover:text-red-400 transition">Login</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold mb-4">Contact Info</h3>
+              <ul className="space-y-3 text-gray-400">
+                <li className="flex items-start gap-3">
+                  <FaMapMarkerAlt className="text-red-500 mt-1" />
+                  <span>{data?.contact?.address || data?.location || "ITDLH, Dalupotha, Negombo"}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <FaPhone className="text-red-500" />
+                  <span>{data?.contact?.phone || "+94 112 785 141"}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <FaEnvelope className="text-red-500" />
+                  <span>{data?.contact?.email || "info@moha.gov.lk"}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold mb-4">Office Hours</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>Weekdays: 6 PM - 9 PM</li>
+                <li>Weekends: 9 AM - 4 PM</li>
+                <li className="pt-4">
+                  <span className="text-green-400">● Open Now</span>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-bold mb-4">Contact Info</h3>
-            <p>📞 +94 112 785 141</p>
-            <p>✉ info@moha.gov.lk</p>
-            <p>📍 Isurupaya, Battaramulla, Sri Lanka</p>
-          </div>
-          <div>
-            <h3 className="text-xl font-bold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li><a href="#vision" className="hover:text-firebrick transition">Vision & Mission</a></li>
-              <li><a href="#features" className="hover:text-firebrick transition">Features</a></li>
-              <li><a href="#courses" className="hover:text-firebrick transition">Courses</a></li>
-              <li><a href="#lecturers" className="hover:text-firebrick transition">Lecturers</a></li>
-              <li><Link to="/login" className="hover:text-firebrick transition">Login</Link></li>
-            </ul>
+
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 ITDLH Negombo. All rights reserved. | Designed with ❤️ for education</p>
           </div>
         </div>
-        <div className="text-center mt-12 border-t border-gray-700 pt-6 text-sm">&copy; 2025 IT & DL Hub. All rights reserved.</div>
       </footer>
 
-      {/* ChatBot UI */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <ChatBot />
-      </div>
+      {/* ChatBot */}
+      <ChatBot />
     </div>
+  );
+};
+
+const SMSLoginForm = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+      
+      // Fetch user role from backend
+      const response = await fetch(`http://localhost:5000/api/students/check-role/${user.uid}`);
+      const data = await response.json();
+      
+      if (data.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (data.role === 'student') {
+        navigate('/student/dashboard');
+      } else {
+        setError('Invalid user role');
+        auth.signOut();
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.message.includes('auth/') 
+        ? 'Invalid email or password'
+        : 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form className="space-y-6" onSubmit={handleLogin}>
+      {error && (
+        <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">
+          {error}
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Email Address
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Password
+        </label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          required
+        />
+      </div>
+
+      <div className="flex items-center justify-between text-sm">
+        <label className="flex items-center">
+          <input type="checkbox" className="mr-2" />
+          <span className="text-gray-600">Remember me</span>
+        </label>
+        <a href="#" className="text-red-600 hover:text-red-700 font-semibold">
+          Forgot password?
+        </a>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full bg-gradient-to-r from-red-600 to-orange-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition transform hover:scale-[1.02] flex items-center justify-center
+          ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+      >
+        {loading ? (
+          <>
+            <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div>
+            Logging in...
+          </>
+        ) : (
+          <>
+            <FaSignInAlt className="inline mr-2" />
+            Login to Portal
+          </>
+        )}
+      </button>
+
+      <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+        <p className="text-gray-600">
+          New student?{" "}
+          <a href="#contact" className="text-red-600 hover:text-red-700 font-semibold">
+            Contact us to register
+          </a>
+        </p>
+      </div>
+
+      <div className="mt-6 bg-blue-50 rounded-xl p-4">
+        
+      </div>
+    </form>
   );
 };
 
@@ -250,8 +895,6 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
-
-  const toggleOpen = () => setOpen(!open);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -263,15 +906,19 @@ const ChatBot = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
-    const userMessage = { from: "user", text: input };
-    setMessages(prev => [...prev, userMessage]);
+    
+    setMessages(prev => [...prev, { from: "user", text: input }]);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/chatbot", { message: input });
-      const botMessage = { from: "bot", text: res.data.reply };
-
-      setMessages(prev => [...prev, botMessage]);
+      const res = await fetch("http://localhost:5000/api/chatbot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: input })
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, { from: "bot", text: data.reply }]);
     } catch (error) {
       setMessages(prev => [...prev, { from: "bot", text: "⚠️ Error connecting to server." }]);
     }
@@ -280,62 +927,85 @@ const ChatBot = () => {
   };
 
   return (
-    <div className="flex flex-col items-end fixed bottom-5 right-5 z-50">
+    <div className="fixed bottom-6 right-6 z-50">
       {open && (
-        <div className="w-80 h-96 bg-white shadow-lg rounded-lg flex flex-col overflow-hidden mb-3">
-          {/* Header */}
-          <div className="bg-firebrick text-white px-4 py-2 flex justify-between items-center">
-            <span className="font-bold">ITDLH ChatBot</span>
-            <button onClick={toggleOpen}><FaTimes /></button>
+        <motion.div
+          className="w-96 bg-white shadow-2xl rounded-2xl overflow-hidden mb-4"
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+        >
+          <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <FaRobot className="text-xl" />
+              </div>
+              <div>
+                <div className="font-bold">ITDLH Assistant</div>
+                <div className="text-xs text-white/80">● Online</div>
+              </div>
+            </div>
+            <button 
+              onClick={() => setOpen(false)}
+              className="w-8 h-8 hover:bg-white/20 rounded-full flex items-center justify-center transition"
+            >
+              <FaTimes />
+            </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 p-3 overflow-y-auto flex flex-col gap-2">
+          <div className="h-96 overflow-y-auto p-4 bg-gray-50">
             {messages.map((msg, idx) => (
-              <div
+              <motion.div
                 key={idx}
-                className={`p-2 rounded-lg max-w-[75%] ${
-                  msg.from === "user"
-                    ? "bg-firebrick text-white self-end"
-                    : "bg-gray-200 text-gray-800 self-start"
-                }`}
-                style={{ whiteSpace: "pre-wrap" }} // ✅ preserve line breaks
+                className={`mb-3 flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
               >
-                {msg.text}
-              </div>
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                    msg.from === "user"
+                      ? "bg-red-600 text-white"
+                      : "bg-white text-gray-800 shadow-md"
+                  }`}
+                  style={{ whiteSpace: "pre-wrap" }}
+                >
+                  {msg.text}
+                </div>
+              </motion.div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="p-2 border-t border-gray-300 flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 border rounded px-3 py-2 focus:outline-none"
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            />
-            <button
-              onClick={handleSend}
-              className="bg-firebrick text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Send
-            </button>
+          <div className="p-4 bg-white border-t border-gray-200">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 border border-gray-300 rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              />
+              <button
+                onClick={handleSend}
+                className="bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition font-semibold"
+              >
+                Send
+              </button>
+            </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {!open && (
-        <button
-          onClick={toggleOpen}
-          className="bg-firebrick text-white p-4 rounded-full shadow-lg hover:bg-red-700 flex items-center justify-center"
-        >
-          <FaRobot size={24} />
-        </button>
-      )}
+      <motion.button
+        onClick={() => setOpen(!open)}
+        className="w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition flex items-center justify-center"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        {open ? <FaTimes className="text-2xl" /> : <FaRobot className="text-2xl" />}
+      </motion.button>
     </div>
   );
 };
+
 export default PublicHomePage;
