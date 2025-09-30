@@ -32,12 +32,14 @@ import {
   FaEnvelope,
   FaSignInAlt,
   FaRobot,
-  FaTimes
+  FaTimes,
+  FaBars
 } from "react-icons/fa";
 
 const PublicHomePage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,7 +68,7 @@ const PublicHomePage = () => {
   }, []);
 
   const stats = [
-    { icon: FaGraduationCap, value: "1000+", label: "Students Enrolled" },
+    { icon: FaGraduationCap, value: "150+", label: "Students Enrolled per Year" },
     { icon: FaCertificate, value: data?.courses?.length || "8+", label: "Courses Offered" },
     { icon: FaChalkboardTeacher, value: data?.lecturers?.length || "15+", label: "Expert Instructors" },
     { icon: FaTrophy, value: "95%", label: "Success Rate" }
@@ -173,10 +175,43 @@ const PublicHomePage = () => {
     Login
   </Link>
 </div>
+<div className="lg:hidden">
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <FaTimes className="text-2xl text-red-600" /> : <FaBars className="text-2xl text-red-600" />}
+            </button>
+          </div>
  
 
         </div>
       </nav>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="lg:hidden fixed top-20 left-0 w-full bg-white shadow-md z-40"
+        >
+          <div className="flex flex-col items-center space-y-4 py-4">
+            <a href="#home" className="hover:text-red-600 transition font-medium" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
+            <a href="#courses" className="hover:text-red-600 transition font-medium" onClick={() => setIsMobileMenuOpen(false)}>Courses</a>
+            <a href="#lecturers" className="hover:text-red-600 transition font-medium" onClick={() => setIsMobileMenuOpen(false)}>Lecturers</a>
+            <a href="#testimonials" className="hover:text-red-600 transition font-medium" onClick={() => setIsMobileMenuOpen(false)}>Testimonials</a>
+            <a href="#contact" className="hover:text-red-600 transition font-medium" onClick={() => setIsMobileMenuOpen(false)}>Contact</a>
+            <button className="hover:text-red-600 transition font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+              Enroll Now
+            </button>
+            <Link
+              to="/login"
+              className="bg-red-600 text-white px-6 py-2 rounded-full shadow-lg hover:bg-red-700 transition transform hover:scale-105"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Login
+            </Link>
+          </div>
+        </motion.div>
+      )}
 
       {/* Hero Section - Enhanced */}
       <section id="home" className="relative min-h-screen flex items-center overflow-hidden pt-20">
@@ -883,22 +918,31 @@ const SMSLoginForm = () => {
         </p>
       </div>
 
-      <div className="mt-6 bg-blue-50 rounded-xl p-4">
-        
-      </div>
+      
     </form>
   );
 };
 
 const ChatBot = () => {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    { from: "bot", text: "Hello! How can I help you today? You can ask me about courses, fees, and more." }
+  ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
+  const [showHighlight, setShowHighlight] = useState(true);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    // Hide the highlight bubble after a few seconds
+    const timer = setTimeout(() => {
+      setShowHighlight(false);
+    }, 6000); // 6 seconds
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -927,7 +971,7 @@ const ChatBot = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
       {open && (
         <motion.div
           className="w-96 bg-white shadow-2xl rounded-2xl overflow-hidden mb-4"
@@ -996,14 +1040,30 @@ const ChatBot = () => {
         </motion.div>
       )}
 
-      <motion.button
-        onClick={() => setOpen(!open)}
-        className="w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition flex items-center justify-center"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        {open ? <FaTimes className="text-2xl" /> : <FaRobot className="text-2xl" />}
-      </motion.button>
+      {/* Highlight Bubble */}
+      {showHighlight && !open && (
+        <motion.div
+          className="bg-white text-gray-800 px-4 py-2 rounded-lg shadow-lg text-sm font-semibold"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 10 }}
+          transition={{ duration: 0.3 }}
+        >
+          Chat with our agent!
+        </motion.div>
+      )}
+
+      <div className="relative">
+        <motion.button
+          onClick={() => setOpen(!open)}
+          className="w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition flex items-center justify-center"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {open ? <FaTimes className="text-2xl" /> : <FaRobot className="text-2xl" />}
+        </motion.button>
+        {showHighlight && !open && <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full animate-ping"></div>}
+      </div>
     </div>
   );
 };

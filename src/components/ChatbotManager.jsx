@@ -167,7 +167,7 @@ const ChatbotManager = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Chatbot Data Management</h1>
+        <h1 className="text-2xl font-bold">WebPage and Chatbot Data Management</h1>
         <div className="flex items-center space-x-4">
           {hasChanges && (
             <span className="text-amber-600 font-medium">• Unsaved changes</span>
@@ -214,7 +214,7 @@ const ChatbotManager = () => {
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {['basic', 'courses', 'lecturers', , 'facilities', 'contact', 'F&Qs'].map(tab => (
+        {['basic', 'courses', 'lecturers', , 'facilities', 'contact', 'faqs'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

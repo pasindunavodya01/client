@@ -121,8 +121,8 @@ export default function AdminDashboard() {
         {/* New Manage Chatbot card */}
         <Link to="/admin/manage-chatbot">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Manage Chatbot</h2>
-            <p className="text-gray-600">Update chatbot responses and data.</p>
+            <h2 className="text-xl font-semibold mb-2">Manage WebPage & Chatbot</h2>
+            <p className="text-gray-600">Update chatbot responses and webpage content.</p>
           </div>
         </Link>
       </div>
