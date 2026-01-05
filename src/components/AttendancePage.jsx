@@ -13,7 +13,7 @@ const AttendancePage = () => {
 
   const fetchSessions = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/attendance/sessions');
+      const res = await axios.get('http://itdlhsms-production.up.railway.app/api/attendance/sessions');
       setSessions(res.data);
       setLoading(false);
     } catch (err) {

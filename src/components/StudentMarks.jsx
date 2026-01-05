@@ -21,7 +21,7 @@ export default function StudentMarks() {
 
         // Fetch student profile to get admission number
         const profileRes = await axios.get(
-          `http://localhost:5000/api/students/profile/${user.uid}`
+          `http://itdlhsms-production.up.railway.app/api/students/profile/${user.uid}`
         );
         const studentData = profileRes.data?.student;
         if (!studentData?.admission_number) {
@@ -34,7 +34,7 @@ export default function StudentMarks() {
         // Fetch marks summary
         const encodedAdmission = encodeURIComponent(studentData.admission_number);
         const marksRes = await axios.get(
-          `http://localhost:5000/api/marks/students/${encodedAdmission}/marks/summary`
+          `http://itdlhsms-production.up.railway.app/api/marks/students/${encodedAdmission}/marks/summary`
         );
         setMarks(marksRes.data?.marks || []);
       } catch (err) {
